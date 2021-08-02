@@ -4,17 +4,6 @@
  */
 package owt.sample.conference;
 
-import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-
-import static org.webrtc.PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
-
-import static owt.base.MediaCodecs.AudioCodec.OPUS;
-import static owt.base.MediaCodecs.AudioCodec.PCMU;
-import static owt.base.MediaCodecs.VideoCodec.H264;
-import static owt.base.MediaCodecs.VideoCodec.H265;
-import static owt.base.MediaCodecs.VideoCodec.VP8;
-import static owt.base.MediaCodecs.VideoCodec.VP9;
-
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -30,12 +19,15 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
+
+import com.alibaba.fastjson.JSON;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -51,6 +43,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -77,6 +70,15 @@ import owt.conference.Subscription;
 import owt.conference.SubscriptionCapabilities;
 import owt.sample.utils.OwtScreenCapturer;
 import owt.sample.utils.OwtVideoCapturer;
+
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static org.webrtc.PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
+import static owt.base.MediaCodecs.AudioCodec.OPUS;
+import static owt.base.MediaCodecs.AudioCodec.PCMU;
+import static owt.base.MediaCodecs.VideoCodec.H264;
+import static owt.base.MediaCodecs.VideoCodec.H265;
+import static owt.base.MediaCodecs.VideoCodec.VP8;
+import static owt.base.MediaCodecs.VideoCodec.VP9;
 
 public class MainActivity extends AppCompatActivity
         implements VideoFragment.VideoFragmentListener,
@@ -117,6 +119,8 @@ public class MainActivity extends AppCompatActivity
     private HashMap<String, RemoteStream> remoteStreamMap = new HashMap<>();
     private HashMap<String, List<String>> videoCodecMap = new HashMap<>();
     private HashMap<String, List<String>> simulcastStreamMap = new HashMap<>();
+    private UserInfo selfInfo;
+    private HashMap<String, UserInfo> userInfoMap = new HashMap<>();
 
     private View.OnClickListener screenControl = new View.OnClickListener() {
         @Override
@@ -250,6 +254,9 @@ public class MainActivity extends AppCompatActivity
 
                         publication = result;
 
+                        selfInfo.setStreamId(result.id());
+                        sendSelfInfo(null);
+
                         try {
                             JSONArray mixBody = new JSONArray();
                             JSONObject body = new JSONObject();
@@ -303,7 +310,7 @@ public class MainActivity extends AppCompatActivity
                 JSONObject joinBody = new JSONObject();
                 try {
                     joinBody.put("role", "presenter");
-                    joinBody.put("username", android.os.Build.MODEL);
+                    joinBody.put("username", "user");
                     joinBody.put("room", roomId.equals("") ? "" : roomId);
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -316,6 +323,9 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onSuccess(ConferenceInfo conferenceInfo) {
                         MainActivity.this.conferenceInfo = conferenceInfo;
+                        selfInfo = createUserInfo();
+                        selfInfo.setParticipantId(conferenceInfo.self().id);
+                        sendSelfInfo(null);
                         for (RemoteStream remoteStream : conferenceInfo.getRemoteStreams()) {
                             remoteStreamIdList.add(remoteStream.id());
                             remoteStreamMap.put(remoteStream.id(), remoteStream);
@@ -350,6 +360,13 @@ public class MainActivity extends AppCompatActivity
             });
         }
     };
+
+    private UserInfo createUserInfo() {
+        UserInfo ret = new UserInfo();
+        ret.setAvatarUrl("http://api.btstu.cn/sjtx/api.php");
+        ret.setUsername(android.os.Build.MODEL + "-" + UUID.randomUUID().toString().substring(0, 4));
+        return ret;
+    }
 
     private View.OnClickListener shareScreen = new View.OnClickListener() {
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -492,7 +509,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            int[] grantResults) {
+                                           int[] grantResults) {
         if (requestCode == OWT_REQUEST_CODE
                 && grantResults.length == 3
                 && grantResults[0] == PERMISSION_GRANTED
@@ -688,7 +705,7 @@ public class MainActivity extends AppCompatActivity
         singleChoiceDialog.setSingleChoiceItems(items, 0,
                 (dialog, which) -> subscribeSimulcastRidChoice = which);
         singleChoiceDialog.setPositiveButton("ok",
-                (dialog, which) -> subscribeForward(remoteStream,videoCodec, items[subscribeSimulcastRidChoice]));
+                (dialog, which) -> subscribeForward(remoteStream, videoCodec, items[subscribeSimulcastRidChoice]));
         singleChoiceDialog.show();
     }
 
@@ -774,12 +791,46 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onParticipantJoined(Participant participant) {
+        sendSelfInfo(participant.id);
+        participant.addObserver(new Participant.ParticipantObserver() {
+            @Override
+            public void onLeft() {
+                participant.removeObserver(this);
+                userInfoMap.remove(participant.id);
+            }
+        });
+    }
 
+    private void sendSelfInfo(String to) {
+        Message<UserInfo> message = new Message<>(Message.TYPE_USER_INFO, selfInfo);
+        conferenceClient.send(to, JSON.toJSONString(message), new ActionCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                Log.d(TAG, "send selfInfo: success");
+            }
+
+            @Override
+            public void onFailure(OwtError error) {
+                Log.d(TAG, "send selfInfo: error = [" + error.errorMessage + "]");
+            }
+        });
     }
 
     @Override
     public void onMessageReceived(String message, String from, String to) {
-
+        Log.d(TAG, "onMessageReceived() called with: message = [" + message + "], from = [" + from + "], to = [" + to + "]");
+        Message<UserInfo> messageBean = Message.fromJson(message, UserInfo.class);
+        if (messageBean.getType() == Message.TYPE_USER_INFO) {
+            UserInfo userInfo = messageBean.getData();
+            userInfoMap.put(userInfo.getParticipantId(), userInfo);
+            if (BuildConfig.DEBUG) {
+                if (!TextUtils.equals(userInfo.getParticipantId(), selfInfo.getParticipantId())) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "user info update: " + userInfo, Toast.LENGTH_SHORT).show();
+                    });
+                }
+            }
+        }
     }
 
     @Override
@@ -835,9 +886,9 @@ public class MainActivity extends AppCompatActivity
 
         for (PublicationSettings.VideoPublicationSettings videoPublicationSetting :
                 remoteStream.publicationSettings.videoPublicationSettings) {
-            if (videoCodecMap.containsKey(remoteStream.id())){
+            if (videoCodecMap.containsKey(remoteStream.id())) {
                 videoCodecMap.get(remoteStream.id()).add(videoPublicationSetting.codec.name.name());
-            }else{
+            } else {
                 videoCodecList.add(videoPublicationSetting.codec.name.name());
                 videoCodecMap.put(remoteStream.id(), videoCodecList);
             }
