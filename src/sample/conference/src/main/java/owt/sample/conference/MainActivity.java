@@ -13,6 +13,7 @@ import android.media.AudioManager;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -171,7 +172,7 @@ public class MainActivity extends AppCompatActivity
             AlertDialog.Builder singleChoiceDialog =
                     new AlertDialog.Builder(MainActivity.this);
             singleChoiceDialog.setTitle("Remote Stream List");
-            singleChoiceDialog.setSingleChoiceItems(items, 0,
+            singleChoiceDialog.setSingleChoiceItems(getRemoteStreamNameList(items), 0,
                     (dialog, which) -> subscribeRemoteStreamChoice = which);
             singleChoiceDialog.setPositiveButton("ok",
                     (dialog, which) -> chooseCodec(
@@ -179,6 +180,34 @@ public class MainActivity extends AppCompatActivity
             singleChoiceDialog.show();
         }
     };
+
+    private String[] getRemoteStreamNameList(String[] items) {
+        String[] ret = new String[items.length];
+        for (int i = 0; i < items.length; i++) {
+            String id = items[i];
+            if (id.endsWith("-common")) {
+                ret[i] = "all in one";
+            } else {
+                UserInfo userInfo = getUserInfoById(id);
+                if (userInfo == null) {
+                    ret[i] = id;
+                } else {
+                    ret[i] = userInfo.getUsername();
+                }
+            }
+        }
+        return ret;
+    }
+
+    @Nullable
+    private UserInfo getUserInfoById(String streamId) {
+        for (UserInfo userInfo : userInfoMap.values()) {
+            if (TextUtils.equals(userInfo.getStreamId(), streamId)) {
+                return userInfo;
+            }
+        }
+        return null;
+    }
 
     private View.OnClickListener leaveRoom = new View.OnClickListener() {
         @Override
