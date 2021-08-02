@@ -303,7 +303,7 @@ public class MainActivity extends AppCompatActivity
                 JSONObject joinBody = new JSONObject();
                 try {
                     joinBody.put("role", "presenter");
-                    joinBody.put("username", "user");
+                    joinBody.put("username", android.os.Build.MODEL);
                     joinBody.put("room", roomId.equals("") ? "" : roomId);
                 } catch (JSONException e) {
                     e.printStackTrace();
