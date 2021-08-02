@@ -809,6 +809,7 @@ public class MainActivity extends AppCompatActivity
             public void onEnded() {
                 remoteStreamIdList.remove(remoteStream.id());
                 remoteStreamMap.remove(remoteStream.id());
+                Log.d(TAG, "onEnded() called: remoteStream.id = " + remoteStream.id() + ", userInfo = " + getUserInfoById(remoteStream.id()));
             }
 
             @Override
@@ -825,7 +826,13 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onLeft() {
                 participant.removeObserver(this);
-                userInfoMap.remove(participant.id);
+                UserInfo userInfo = userInfoMap.remove(participant.id);
+                Log.d(TAG, "onLeft() called: participant.id = " + participant.id + ", userInfo = " + userInfo);
+                if (userInfo != null) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(MainActivity.this, userInfo.getUsername() + " left", Toast.LENGTH_SHORT).show();
+                    });
+                }
             }
         });
     }
