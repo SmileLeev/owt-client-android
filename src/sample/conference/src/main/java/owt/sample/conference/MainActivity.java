@@ -106,12 +106,12 @@ public class MainActivity extends AppCompatActivity
     private Publication publication;
     private Subscription subscription;
     private LocalStream localStream;
-    private RemoteStream stream2Sub;
     private OwtVideoCapturer capturer;
     private LocalStream screenStream;
     private OwtScreenCapturer screenCapturer;
     private Publication screenPublication;
-    private SurfaceViewRenderer localRenderer, remoteRenderer;
+    private RendererAdapter rendererAdapter;
+    private SurfaceViewRenderer remoteRenderer;
     private RemoteStream remoteForwardStream = null;
     private int subscribeRemoteStreamChoice = 0;
     private int subscribeVideoCodecChoice = 0;
@@ -236,14 +236,13 @@ public class MainActivity extends AppCompatActivity
     private View.OnClickListener unpublish = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            localRenderer.setVisibility(View.GONE);
             rightBtn.setText(R.string.publish);
             rightBtn.setOnClickListener(publish);
             videoFragment.clearStats(true);
 
             executor.execute(() -> {
                 publication.stop();
-                localStream.detach(localRenderer);
+                rendererAdapter.detachStream(selfInfo.getParticipantId(), localStream);
 
                 capturer.stopCapture();
                 capturer.dispose();
@@ -267,14 +266,12 @@ public class MainActivity extends AppCompatActivity
                         isCameraFront);
                 localStream = new LocalStream(capturer,
                         new MediaConstraints.AudioTrackConstraints());
-                localStream.attach(localRenderer);
+                rendererAdapter.attachStream(selfInfo.getParticipantId(), localStream);
 
                 ActionCallback<Publication> callback = new ActionCallback<Publication>() {
                     @Override
                     public void onSuccess(final Publication result) {
                         runOnUiThread(() -> {
-                            localRenderer.setVisibility(View.VISIBLE);
-
                             rightBtn.setEnabled(true);
                             rightBtn.setTextColor(Color.WHITE);
                             rightBtn.setText(R.string.unpublish);
@@ -354,6 +351,7 @@ public class MainActivity extends AppCompatActivity
                         MainActivity.this.conferenceInfo = conferenceInfo;
                         selfInfo = createUserInfo();
                         selfInfo.setParticipantId(conferenceInfo.self().id);
+                        userInfoMap.put(selfInfo.getParticipantId(), selfInfo);
                         sendSelfInfo(null);
                         for (RemoteStream remoteStream : conferenceInfo.getRemoteStreams()) {
                             remoteStreamIdList.add(remoteStream.id());
@@ -457,11 +455,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onPause() {
-        if (localStream != null) {
-            localStream.detach(localRenderer);
-        }
-        if (stream2Sub != null) {
-            stream2Sub.detach(remoteRenderer);
+        if (rendererAdapter != null) {
+            rendererAdapter.onStop();
         }
 
         super.onPause();
@@ -470,11 +465,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        if (localStream != null) {
-            localStream.attach(localRenderer);
-        }
-        if (stream2Sub != null) {
-            stream2Sub.attach(remoteRenderer);
+        if (rendererAdapter != null) {
+            rendererAdapter.onStart();
         }
     }
 
@@ -794,8 +786,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onRenderer(SurfaceViewRenderer localRenderer, SurfaceViewRenderer remoteRenderer) {
-        this.localRenderer = localRenderer;
+    public void onRenderer(RendererAdapter adapter, SurfaceViewRenderer remoteRenderer) {
+        this.rendererAdapter = adapter;
         this.remoteRenderer = remoteRenderer;
     }
 
@@ -830,7 +822,7 @@ public class MainActivity extends AppCompatActivity
                 Log.d(TAG, "onLeft() called: participant.id = " + participant.id + ", userInfo = " + userInfo);
                 if (userInfo != null) {
                     runOnUiThread(() -> {
-                        Toast.makeText(MainActivity.this, userInfo.getUsername() + " left", Toast.LENGTH_SHORT).show();
+                        onMemberLeft(userInfo);
                     });
                 }
             }
@@ -858,15 +850,35 @@ public class MainActivity extends AppCompatActivity
         Message<UserInfo> messageBean = Message.fromJson(message, UserInfo.class);
         if (messageBean.getType() == Message.TYPE_USER_INFO) {
             UserInfo userInfo = messageBean.getData();
+            boolean exists = userInfoMap.containsKey(userInfo.getParticipantId());
             userInfoMap.put(userInfo.getParticipantId(), userInfo);
-            if (BuildConfig.DEBUG) {
-                if (!TextUtils.equals(userInfo.getParticipantId(), selfInfo.getParticipantId())) {
-                    runOnUiThread(() -> {
-                        Toast.makeText(this, "user info update: " + userInfo, Toast.LENGTH_SHORT).show();
-                    });
+            runOnUiThread(() -> {
+                if (!exists) {
+                    onMemberJoined(userInfo);
+                } else {
+                    onMemberUpdate(userInfo);
                 }
-            }
+            });
         }
+    }
+
+    private void onMemberJoined(UserInfo userInfo) {
+        if (!selfInfo.equals(userInfo)) {
+            Toast.makeText(this, userInfo.getUsername() + " joined", Toast.LENGTH_SHORT).show();
+        }
+        rendererAdapter.add(userInfo);
+    }
+
+    private void onMemberUpdate(UserInfo userInfo) {
+        Log.d(TAG, "onMemberUpdate() called with: userInfo = [" + userInfo + "]");
+        rendererAdapter.update(userInfo);
+    }
+
+    private void onMemberLeft(UserInfo userInfo) {
+        if (!selfInfo.equals(userInfo)) {
+            Toast.makeText(this, userInfo.getUsername() + " left", Toast.LENGTH_SHORT).show();
+        }
+        rendererAdapter.remove(userInfo);
     }
 
     @Override
@@ -904,7 +916,6 @@ public class MainActivity extends AppCompatActivity
 
         publication = null;
         subscription = null;
-        stream2Sub = null;
 
         remoteStreamIdList.clear();
         remoteStreamMap.clear();
