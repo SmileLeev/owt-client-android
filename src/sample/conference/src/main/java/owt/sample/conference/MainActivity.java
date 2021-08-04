@@ -344,6 +344,9 @@ public class MainActivity extends AppCompatActivity
                         selfInfo = createUserInfo();
                         selfInfo.setParticipantId(conferenceInfo.self().id);
                         userInfoMap.put(selfInfo.getParticipantId(), selfInfo);
+                        if (rendererAdapter != null) {
+                            rendererAdapter.add(selfInfo);
+                        }
                         sendSelfInfo(null);
                         for (RemoteStream remoteStream : conferenceInfo.getRemoteStreams()) {
                             remoteStreamIdList.add(remoteStream.id());
@@ -781,6 +784,9 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onRenderer(RendererAdapter adapter) {
         this.rendererAdapter = adapter;
+        if (selfInfo != null) {
+            rendererAdapter.add(selfInfo);
+        }
     }
 
     @Override
@@ -910,6 +916,10 @@ public class MainActivity extends AppCompatActivity
 
         remoteStreamIdList.clear();
         remoteStreamMap.clear();
+
+        selfInfo = null;
+        rendererAdapter = null;
+        userInfoMap.clear();
     }
 
     public void getParameterByRemoteStream(RemoteStream remoteStream) {
