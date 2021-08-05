@@ -321,6 +321,9 @@ public class MainActivity extends AppCompatActivity
                             });
                         }
                         requestPermission();
+                        runOnUiThread(() -> {
+                            rightBtn.performClick();
+                        });
                     }
 
                     @Override
