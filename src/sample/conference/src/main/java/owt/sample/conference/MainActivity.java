@@ -692,7 +692,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onRenderer(RendererAdapter adapter) {
+    public void onAdapter(RendererAdapter adapter) {
         this.rendererAdapter = adapter;
         if (selfInfo != null) {
             rendererAdapter.add(selfInfo.getParticipantId(), selfInfo);
