@@ -5,9 +5,7 @@
 package owt.sample.conference;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-
 import static org.webrtc.PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
-
 import static owt.base.MediaCodecs.AudioCodec.OPUS;
 import static owt.base.MediaCodecs.AudioCodec.PCMU;
 import static owt.base.MediaCodecs.VideoCodec.H264;
@@ -24,12 +22,14 @@ import android.media.AudioManager;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.annotation.UiThread;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
@@ -37,13 +37,15 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.alibaba.fastjson.JSON;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.webrtc.CameraVideoCapturer;
 import org.webrtc.EglBase;
 import org.webrtc.PeerConnection;
 import org.webrtc.RTCStatsReport;
-import org.webrtc.SurfaceViewRenderer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,6 +53,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -97,42 +100,30 @@ public class MainActivity extends AppCompatActivity
     private SettingsFragment settingsFragment;
     private View fragmentContainer;
     private View bottomView;
-    private Button leftBtn, rightBtn, middleBtn, subscribeBtn, unSubscribeBtn;
+    private Button leftBtn, rightBtn, middleBtn;
     private ConferenceClient conferenceClient;
     private ConferenceInfo conferenceInfo;
     private Publication publication;
-    private Subscription subscription;
     private LocalStream localStream;
-    private RemoteStream stream2Sub;
     private OwtVideoCapturer capturer;
     private LocalStream screenStream;
     private OwtScreenCapturer screenCapturer;
     private Publication screenPublication;
-    private SurfaceViewRenderer localRenderer, remoteRenderer;
-    private RemoteStream remoteForwardStream = null;
-    private int subscribeRemoteStreamChoice = 0;
-    private int subscribeVideoCodecChoice = 0;
-    private int subscribeSimulcastRidChoice = 0;
+    private RendererAdapter rendererAdapter;
     private ArrayList<String> remoteStreamIdList = new ArrayList<>();
     private HashMap<String, RemoteStream> remoteStreamMap = new HashMap<>();
     private HashMap<String, List<String>> videoCodecMap = new HashMap<>();
     private HashMap<String, List<String>> simulcastStreamMap = new HashMap<>();
+    private UserInfo selfInfo;
+    private HashMap<String, UserInfo> userInfoMap = new HashMap<>();
 
     private View.OnClickListener screenControl = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             if (fullScreen) {
-                ActionBar actionBar = getSupportActionBar();
-                if (actionBar != null) {
-                    actionBar.hide();
-                }
                 bottomView.setVisibility(View.GONE);
                 fullScreen = false;
             } else {
-                ActionBar actionBar = getSupportActionBar();
-                if (actionBar != null) {
-                    actionBar.show();
-                }
                 bottomView.setVisibility(View.VISIBLE);
                 fullScreen = true;
             }
@@ -156,25 +147,31 @@ public class MainActivity extends AppCompatActivity
             settingsCurrent = !settingsCurrent;
         }
     };
+    private String avatarUrl;
 
-    private View.OnClickListener subscribe = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            subscribeRemoteStreamChoice = 0;
-            subscribeVideoCodecChoice = 0;
-            subscribeSimulcastRidChoice = 0;
-            final String[] items = (String[]) remoteStreamIdList.toArray(new String[0]);
-            AlertDialog.Builder singleChoiceDialog =
-                    new AlertDialog.Builder(MainActivity.this);
-            singleChoiceDialog.setTitle("Remote Stream List");
-            singleChoiceDialog.setSingleChoiceItems(items, 0,
-                    (dialog, which) -> subscribeRemoteStreamChoice = which);
-            singleChoiceDialog.setPositiveButton("ok",
-                    (dialog, which) -> chooseCodec(
-                            remoteStreamMap.get(items[subscribeRemoteStreamChoice])));
-            singleChoiceDialog.show();
+    private String[] getRemoteStreamNameList(String[] items) {
+        String[] ret = new String[items.length];
+        for (int i = 0; i < items.length; i++) {
+            String id = items[i];
+            if (id.endsWith("-common")) {
+                ret[i] = "all in one";
+            } else {
+                UserInfo userInfo = getUserInfoByStreamId(id);
+                if (userInfo == null) {
+                    ret[i] = id;
+                } else {
+                    ret[i] = userInfo.getUsername();
+                }
+            }
         }
-    };
+        return ret;
+    }
+
+    @Nullable
+    private UserInfo getUserInfoByStreamId(String streamId) {
+        RemoteStream remoteStream = remoteStreamMap.get(streamId);
+        return userInfoMap.get(remoteStream.origin());
+    }
 
     private View.OnClickListener leaveRoom = new View.OnClickListener() {
         @Override
@@ -183,34 +180,15 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    private View.OnClickListener unSubscribe = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (remoteForwardStream != null) {
-                subscription.stop();
-                remoteForwardStream.detach(remoteRenderer);
-                runOnUiThread(() -> {
-                    unSubscribeBtn.setVisibility(View.GONE);
-                    subscribeBtn.setVisibility(View.VISIBLE);
-                });
-                subscribeRemoteStreamChoice = 0;
-                subscribeVideoCodecChoice = 0;
-            }
-
-        }
-    };
-
     private View.OnClickListener unpublish = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            localRenderer.setVisibility(View.GONE);
             rightBtn.setText(R.string.publish);
             rightBtn.setOnClickListener(publish);
             videoFragment.clearStats(true);
 
             executor.execute(() -> {
-                publication.stop();
-                localStream.detach(localRenderer);
+                rendererAdapter.detachLocalStream(selfInfo.getParticipantId(), localStream);
 
                 capturer.stopCapture();
                 capturer.dispose();
@@ -234,14 +212,11 @@ public class MainActivity extends AppCompatActivity
                         isCameraFront);
                 localStream = new LocalStream(capturer,
                         new MediaConstraints.AudioTrackConstraints());
-                localStream.attach(localRenderer);
 
                 ActionCallback<Publication> callback = new ActionCallback<Publication>() {
                     @Override
                     public void onSuccess(final Publication result) {
                         runOnUiThread(() -> {
-                            localRenderer.setVisibility(View.VISIBLE);
-
                             rightBtn.setEnabled(true);
                             rightBtn.setTextColor(Color.WHITE);
                             rightBtn.setText(R.string.unpublish);
@@ -249,6 +224,11 @@ public class MainActivity extends AppCompatActivity
                         });
 
                         publication = result;
+                        rendererAdapter.onSwitchCamera(isCameraFront);
+                        rendererAdapter.attachLocalStream(selfInfo.getParticipantId(), result, localStream);
+                        runOnUiThread(() -> {
+                            rendererAdapter.update(selfInfo);
+                        });
 
                         try {
                             JSONArray mixBody = new JSONArray();
@@ -316,10 +296,17 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onSuccess(ConferenceInfo conferenceInfo) {
                         MainActivity.this.conferenceInfo = conferenceInfo;
+                        selfInfo = createUserInfo();
+                        selfInfo.setParticipantId(conferenceInfo.self().id);
+                        userInfoMap.put(selfInfo.getParticipantId(), selfInfo);
+                        sendSelfInfo(null);
                         for (RemoteStream remoteStream : conferenceInfo.getRemoteStreams()) {
                             remoteStreamIdList.add(remoteStream.id());
                             remoteStreamMap.put(remoteStream.id(), remoteStream);
                             getParameterByRemoteStream(remoteStream);
+                            if (localStream == null || !TextUtils.equals(remoteStream.id(), localStream.id())) {
+                                subscribeForward(remoteStream, "VP8", null);
+                            }
                             remoteStream.addObserver(new owt.base.RemoteStream.StreamObserver() {
                                 @Override
                                 public void onEnded() {
@@ -334,6 +321,9 @@ public class MainActivity extends AppCompatActivity
                             });
                         }
                         requestPermission();
+                        runOnUiThread(() -> {
+                            rightBtn.performClick();
+                        });
                     }
 
                     @Override
@@ -350,6 +340,14 @@ public class MainActivity extends AppCompatActivity
             });
         }
     };
+
+    private UserInfo createUserInfo() {
+        UserInfo ret = new UserInfo();
+        String rand = UUID.randomUUID().toString().substring(0, 4);
+        ret.setUsername(android.os.Build.MODEL + "-" + rand);
+        ret.setAvatarUrl(avatarUrl);
+        return ret;
+    }
 
     private View.OnClickListener shareScreen = new View.OnClickListener() {
         @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -382,6 +380,10 @@ public class MainActivity extends AppCompatActivity
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN
                 | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }
 
         fullScreen = true;
         bottomView = findViewById(R.id.bottom_bar);
@@ -390,15 +392,24 @@ public class MainActivity extends AppCompatActivity
         leftBtn.setOnClickListener(joinRoom);
         rightBtn = findViewById(R.id.multi_func_btn_right);
         rightBtn.setOnClickListener(settings);
-        subscribeBtn = findViewById(R.id.multi_func_btn_subscribe);
-        subscribeBtn.setOnClickListener(subscribe);
-        subscribeBtn.setVisibility(View.GONE);
-        unSubscribeBtn = findViewById(R.id.multi_func_btn_unsubscribe);
-        unSubscribeBtn.setOnClickListener(unSubscribe);
-        unSubscribeBtn.setVisibility(View.GONE);
         middleBtn = findViewById(R.id.multi_func_btn_middle);
         middleBtn.setOnClickListener(shareScreen);
         middleBtn.setVisibility(View.GONE);
+
+        rightBtn.setOnLongClickListener(view -> {
+            capturer.switchCamera(new CameraVideoCapturer.CameraSwitchHandler() {
+                @Override
+                public void onCameraSwitchDone(boolean isFrontCamera) {
+                    rendererAdapter.onSwitchCamera(isFrontCamera);
+                }
+
+                @Override
+                public void onCameraSwitchError(String s) {
+
+                }
+            });
+            return true;
+        });
 
         AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
@@ -407,15 +418,21 @@ public class MainActivity extends AppCompatActivity
         switchFragment(loginFragment);
 
         initConferenceClient();
+
+        initAvatarUrl();
+    }
+
+    private void initAvatarUrl() {
+        executor.execute(() -> {
+            String json = HttpUtils.request("http://api.btstu.cn/sjtx/api.php?format=json", "GET", "", false);
+            avatarUrl = JSON.parseObject(json).getString("imgurl");
+        });
     }
 
     @Override
     protected void onPause() {
-        if (localStream != null) {
-            localStream.detach(localRenderer);
-        }
-        if (stream2Sub != null) {
-            stream2Sub.detach(remoteRenderer);
+        if (rendererAdapter != null) {
+            rendererAdapter.onStop();
         }
 
         super.onPause();
@@ -424,11 +441,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        if (localStream != null) {
-            localStream.attach(localRenderer);
-        }
-        if (stream2Sub != null) {
-            stream2Sub.attach(remoteRenderer);
+        if (rendererAdapter != null) {
+            rendererAdapter.onStart();
         }
     }
 
@@ -492,7 +506,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            int[] grantResults) {
+                                           int[] grantResults) {
         if (requestCode == OWT_REQUEST_CODE
                 && grantResults.length == 3
                 && grantResults[0] == PERMISSION_GRANTED
@@ -518,8 +532,6 @@ public class MainActivity extends AppCompatActivity
             rightBtn.setText(R.string.publish);
             rightBtn.setOnClickListener(publish);
             fragmentContainer.setOnClickListener(screenControl);
-            subscribeBtn.setVisibility(View.VISIBLE);
-
         });
 
         if (statsTimer != null) {
@@ -630,8 +642,8 @@ public class MainActivity extends AppCompatActivity
                 }
             });
         }
-        if (subscription != null) {
-            subscription.getStats(new ActionCallback<RTCStatsReport>() {
+        if (rendererAdapter != null) {
+            rendererAdapter.getStatus(new ActionCallback<RTCStatsReport>() {
                 @Override
                 public void onSuccess(RTCStatsReport result) {
                     videoFragment.updateStats(result, false);
@@ -654,42 +666,6 @@ public class MainActivity extends AppCompatActivity
         } else {
             middleBtn.setVisibility(View.GONE);
         }
-    }
-
-    public void chooseCodec(RemoteStream remoteStream) {
-        List<String> videoCodecList = videoCodecMap.get(remoteStream.id());
-        removeDuplicate(videoCodecList);
-        final String[] items = videoCodecList.toArray(new String[0]);
-        AlertDialog.Builder singleChoiceDialog =
-                new AlertDialog.Builder(MainActivity.this);
-        singleChoiceDialog.setTitle("VideoCodec List");
-        singleChoiceDialog.setSingleChoiceItems(items, 0,
-                (dialog, which) -> subscribeVideoCodecChoice = which);
-        singleChoiceDialog.setPositiveButton("ok",
-                (dialog, which) -> {
-                    String chooseVideoCodec = items[subscribeVideoCodecChoice];
-                    if (simulcastStreamMap.containsKey(remoteStream.id())) {
-                        chooseRid(remoteStream, chooseVideoCodec);
-                    } else {
-                        subscribeForward(remoteStream, chooseVideoCodec, null);
-                    }
-
-                });
-        singleChoiceDialog.show();
-    }
-
-    public void chooseRid(RemoteStream remoteStream, String videoCodec) {
-        List<String> ridList = simulcastStreamMap.get(remoteStream.id());
-        removeDuplicate(ridList);
-        final String[] items = (String[]) ridList.toArray(new String[0]);
-        AlertDialog.Builder singleChoiceDialog =
-                new AlertDialog.Builder(MainActivity.this);
-        singleChoiceDialog.setTitle("Rid List");
-        singleChoiceDialog.setSingleChoiceItems(items, 0,
-                (dialog, which) -> subscribeSimulcastRidChoice = which);
-        singleChoiceDialog.setPositiveButton("ok",
-                (dialog, which) -> subscribeForward(remoteStream,videoCodec, items[subscribeSimulcastRidChoice]));
-        singleChoiceDialog.show();
     }
 
     public void subscribeForward(RemoteStream remoteStream, String videoCodec, String rid) {
@@ -729,14 +705,7 @@ public class MainActivity extends AppCompatActivity
                 new ActionCallback<Subscription>() {
                     @Override
                     public void onSuccess(Subscription result) {
-                        MainActivity.this.subscription = result;
-                        MainActivity.this.remoteForwardStream = remoteStream;
-                        remoteStream.attach(remoteRenderer);
-                        runOnUiThread(() -> {
-                            subscribeBtn.setVisibility(View.GONE);
-                            unSubscribeBtn.setVisibility(View.VISIBLE);
-                        });
-
+                        rendererAdapter.attachRemoteStream(result, remoteStream);
                     }
 
                     @Override
@@ -748,9 +717,14 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onRenderer(SurfaceViewRenderer localRenderer, SurfaceViewRenderer remoteRenderer) {
-        this.localRenderer = localRenderer;
-        this.remoteRenderer = remoteRenderer;
+    public void onAdapter(RendererAdapter adapter) {
+        this.rendererAdapter = adapter;
+        rendererAdapter.add(selfInfo.getParticipantId(), selfInfo);
+        for (Participant participant : conferenceInfo.getParticipants()) {
+            if (!TextUtils.equals(participant.id, selfInfo.getParticipantId())) {
+                rendererAdapter.add(participant.id, null);
+            }
+        }
     }
 
     @Override
@@ -758,11 +732,16 @@ public class MainActivity extends AppCompatActivity
         remoteStreamIdList.add(remoteStream.id());
         remoteStreamMap.put(remoteStream.id(), remoteStream);
         getParameterByRemoteStream(remoteStream);
+        if (localStream == null || !TextUtils.equals(remoteStream.id(), localStream.id())) {
+            subscribeForward(remoteStream, "VP8", null);
+        }
         remoteStream.addObserver(new owt.base.RemoteStream.StreamObserver() {
             @Override
             public void onEnded() {
                 remoteStreamIdList.remove(remoteStream.id());
                 remoteStreamMap.remove(remoteStream.id());
+                Log.d(TAG, "onEnded() called: remoteStream.id = " + remoteStream.id() + ", userInfo = " + userInfoMap.get(remoteStream.origin()));
+                rendererAdapter.detachRemoteStream(remoteStream);
             }
 
             @Override
@@ -774,12 +753,84 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onParticipantJoined(Participant participant) {
+        Log.d(TAG, "onParticipantJoined() called with: participant = [" + participant.id + "]");
+        sendSelfInfo(participant.id);
+        runOnUiThread(() -> {
+            rendererAdapter.add(participant.id, null);
+        });
+        participant.addObserver(new Participant.ParticipantObserver() {
+            @Override
+            public void onLeft() {
+                participant.removeObserver(this);
+                UserInfo userInfo = userInfoMap.remove(participant.id);
+                Log.d(TAG, "onLeft() called: participant.id = " + participant.id + ", userInfo = " + userInfo);
+                runOnUiThread(() -> {
+                    onMemberLeft(participant.id, userInfo);
+                });
+            }
+        });
+    }
 
+    private void sendSelfInfo(String to) {
+        Message<UserInfo> message = new Message<>(Message.TYPE_USER_INFO, selfInfo);
+        conferenceClient.send(to, JSON.toJSONString(message), new ActionCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                Log.d(TAG, "send selfInfo: success");
+            }
+
+            @Override
+            public void onFailure(OwtError error) {
+                Log.d(TAG, "send selfInfo: error = [" + error.errorMessage + "]");
+            }
+        });
     }
 
     @Override
     public void onMessageReceived(String message, String from, String to) {
+        Log.d(TAG, "onMessageReceived() called with: message = [" + message + "], from = [" + from + "], to = [" + to + "]");
+        Message<UserInfo> messageBean = Message.fromJson(message, UserInfo.class);
+        if (messageBean.getType() == Message.TYPE_USER_INFO) {
+            UserInfo userInfo = messageBean.getData();
+            boolean exists = userInfoMap.containsKey(userInfo.getParticipantId());
+            userInfoMap.put(userInfo.getParticipantId(), userInfo);
+            runOnUiThread(() -> {
+                if (!exists) {
+                    onMemberJoined(userInfo.getParticipantId(), userInfo);
+                } else {
+                    onMemberUpdate(userInfo);
+                }
+            });
+        }
+    }
 
+    @UiThread
+    private void onMemberJoined(String participantId, @Nullable UserInfo userInfo) {
+        if (!selfInfo.equals(userInfo)) {
+            Toast.makeText(this, getUsername(participantId, userInfo) + " joined", Toast.LENGTH_SHORT).show();
+        }
+        rendererAdapter.add(participantId, userInfo);
+    }
+
+    private String getUsername(String participantId, @Nullable UserInfo userInfo) {
+        if (userInfo != null) {
+            return userInfo.getUsername();
+        }
+        return participantId;
+    }
+
+    @UiThread
+    private void onMemberUpdate(UserInfo userInfo) {
+        Log.d(TAG, "onMemberUpdate() called with: userInfo = [" + userInfo + "]");
+        rendererAdapter.update(userInfo);
+    }
+
+    @UiThread
+    private void onMemberLeft(String participantId, @Nullable UserInfo userInfo) {
+        if (!selfInfo.equals(userInfo)) {
+            Toast.makeText(this, getUsername(participantId, userInfo) + " left", Toast.LENGTH_SHORT).show();
+        }
+        rendererAdapter.remove(participantId, userInfo);
     }
 
     @Override
@@ -794,8 +845,6 @@ public class MainActivity extends AppCompatActivity
             rightBtn.setTextColor(Color.WHITE);
             rightBtn.setText(R.string.settings);
             rightBtn.setOnClickListener(settings);
-            subscribeBtn.setVisibility(View.GONE);
-            unSubscribeBtn.setVisibility(View.GONE);
             fragmentContainer.setOnClickListener(null);
         });
 
@@ -816,11 +865,13 @@ public class MainActivity extends AppCompatActivity
         }
 
         publication = null;
-        subscription = null;
-        stream2Sub = null;
 
         remoteStreamIdList.clear();
         remoteStreamMap.clear();
+
+        selfInfo = null;
+        rendererAdapter = null;
+        userInfoMap.clear();
     }
 
     public void getParameterByRemoteStream(RemoteStream remoteStream) {
@@ -835,9 +886,9 @@ public class MainActivity extends AppCompatActivity
 
         for (PublicationSettings.VideoPublicationSettings videoPublicationSetting :
                 remoteStream.publicationSettings.videoPublicationSettings) {
-            if (videoCodecMap.containsKey(remoteStream.id())){
+            if (videoCodecMap.containsKey(remoteStream.id())) {
                 videoCodecMap.get(remoteStream.id()).add(videoPublicationSetting.codec.name.name());
-            }else{
+            } else {
                 videoCodecList.add(videoPublicationSetting.codec.name.name());
                 videoCodecMap.put(remoteStream.id(), videoCodecList);
             }
