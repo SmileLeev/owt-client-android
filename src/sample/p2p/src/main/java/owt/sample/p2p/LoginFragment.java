@@ -5,8 +5,11 @@
 package owt.sample.p2p;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,13 +46,36 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         callBtn = mView.findViewById(R.id.call_btn);
         callBtn.setOnClickListener(this);
         serverText = mView.findViewById(R.id.server_url);
-        serverText.setText("http://example.com");
+        String serverUrl = getSp().getString("serverUrl",
+                "http://192.168.0.99:8095"
+        );
+        serverText.setText(serverUrl);
+        serverText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                getSp().edit().putString("serverUrl", editable.toString()).apply();
+            }
+        });
         myIdText = mView.findViewById(R.id.my_id);
         peerIdText = mView.findViewById(R.id.peer_id);
         peerContainer = mView.findViewById(R.id.peer_container);
         peerContainer.setVisibility(loggedIn ? View.VISIBLE : View.INVISIBLE);
         errorTV = mView.findViewById(R.id.error_msg);
         return mView;
+    }
+
+    private SharedPreferences getSp() {
+        return getContext().getSharedPreferences("LoginFragment", Context.MODE_PRIVATE);
     }
 
     @Override
