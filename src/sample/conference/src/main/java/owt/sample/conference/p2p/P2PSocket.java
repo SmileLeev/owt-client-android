@@ -32,6 +32,12 @@ public class P2PSocket implements ConferenceClient.ConferenceClientObserver {
         listenerList.add(fn);
     }
 
+    @Override
+    public void onServerDisconnected() {
+        // remove all listener add on connected,
+        listenerList.clear();
+    }
+
     public void send(String peerId, String message, ActionCallback<Void> callback) {
         String json = JSON.toJSONString(new Message(Message.TYPE_P2P_SIGNALING, message));
         conferenceClient.send(peerId, json, callback);
@@ -64,10 +70,5 @@ public class P2PSocket implements ConferenceClient.ConferenceClientObserver {
         for (Emitter.Listener fn : listenerList) {
             fn.call(jsonObject);
         }
-    }
-
-    @Override
-    public void onServerDisconnected() {
-        // ignored
     }
 }
