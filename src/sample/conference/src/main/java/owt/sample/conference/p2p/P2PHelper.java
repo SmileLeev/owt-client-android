@@ -46,7 +46,7 @@ public class P2PHelper {
     public void onParticipantJoined(Participant participant) {
         updateEnabled();
         p2PClient.addAllowedRemotePeer(participant.id);
-//        publish(participant);
+        publish(participant);
     }
 
     public void onJoinSuccess(ConferenceInfo conferenceInfo, P2PSocket p2PSocket) {
