@@ -72,7 +72,7 @@ public class P2PHelper {
 
     public void publish(LocalStream localStream) {
         this.localStream = localStream;
-        if (!enabled) {
+        if (!isEnabled()) {
             return;
         }
         for (Participant participant : conferenceInfo.getParticipants()) {
@@ -83,7 +83,7 @@ public class P2PHelper {
     }
 
     private void publish(Participant participant) {
-        if (!enabled) {
+        if (!isEnabled()) {
             return;
         }
         Log.d(TAG, "publish() called with: participant = [" + participant.id + "]");
