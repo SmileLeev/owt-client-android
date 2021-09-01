@@ -475,9 +475,9 @@ public class MainActivity extends AppCompatActivity
             contextHasInitialized = true;
         }
 
-        PeerConnection.IceServer iceServer = PeerConnection.IceServer.builder(
-                "turn:example.com?transport=tcp").setUsername("userName").setPassword(
-                "passward").createIceServer();
+        PeerConnection.IceServer iceServer = PeerConnection.IceServer
+                .builder("stun:stun.l.google.com:19302")
+                .createIceServer();
         List<PeerConnection.IceServer> iceServers = new ArrayList<>();
         iceServers.add(iceServer);
         PeerConnection.RTCConfiguration rtcConfiguration = new PeerConnection.RTCConfiguration(
