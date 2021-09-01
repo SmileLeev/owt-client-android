@@ -219,7 +219,10 @@ public class MainActivity extends AppCompatActivity
                 localStream = new LocalStream(capturer,
                         new MediaConstraints.AudioTrackConstraints());
 
-                p2PHelper.publish(localStream);
+                if (p2PHelper.isEnabled()) {
+                    p2PHelper.publish(localStream);
+                    return;
+                }
                 ActionCallback<Publication> callback = new ActionCallback<Publication>() {
                     @Override
                     public void onSuccess(final Publication result) {
