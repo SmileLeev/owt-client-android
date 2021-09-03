@@ -12,7 +12,7 @@ import owt.base.ActionCallback;
 import owt.conference.ConferenceClient;
 import owt.conference.Participant;
 import owt.conference.RemoteStream;
-import owt.sample.conference.Message;
+import owt.p2pandsfu.bean.Message;
 
 public class P2PSocket implements ConferenceClient.ConferenceClientObserver {
     private ConferenceClient conferenceClient;
