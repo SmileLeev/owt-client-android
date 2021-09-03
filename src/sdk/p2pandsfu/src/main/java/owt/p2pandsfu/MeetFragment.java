@@ -72,6 +72,7 @@ public class MeetFragment extends Fragment {
     private static final String ARG_ROOM_ID = "ARG_ROOM_ID";
     private static final String ARG_USER_INFO = "ARG_USER_INFO";
     private static boolean contextHasInitialized = false;
+    private static EglBase rootEglBase;
 
     private ExecutorService executor = Executors.newSingleThreadExecutor();
     private Handler handler = new Handler(Looper.getMainLooper());
@@ -81,7 +82,6 @@ public class MeetFragment extends Fragment {
     private ConferenceInfo conferenceInfo;
     private LocalStream localStream;
     private OwtVideoCapturer capturer;
-    private EglBase rootEglBase;
     private P2PHelper p2PHelper = new P2PHelper();
     private UserInfo selfInfo;
     private HashMap<String, UserInfo> userInfoMap = new HashMap<>();
@@ -352,7 +352,6 @@ public class MeetFragment extends Fragment {
     @Override
     public void onDestroy() {
         conferenceClient.leave();
-        rootEglBase.release();
         super.onDestroy();
     }
 
