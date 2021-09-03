@@ -1,0 +1,41 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="owt.p2pandsfu.MeetFragment">
+
+    <FrameLayout
+        android:id="@+id/video_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <owt.p2pandsfu.view.LargeVideo
+            android:id="@+id/largeVideo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_marginBottom="100dp"
+            android:orientation="vertical">
+
+            <include layout="@layout/view_toolbox" />
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/rvSmall"
+                android:layout_width="match_parent"
+                android:layout_height="160dp"
+                android:orientation="horizontal"
+                app:layoutManager="android.support.v7.widget.LinearLayoutManager"
+                tools:itemCount="4"
+                tools:listitem="@layout/item_remote_video" />
+
+
+        </LinearLayout>
+
+    </FrameLayout>
+
+</FrameLayout>
