@@ -16,6 +16,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.GenericRequest;
+import com.bumptech.glide.request.Request;
 
 import org.webrtc.EglBase;
 import org.webrtc.SurfaceViewRenderer;
@@ -179,6 +181,9 @@ public class ParticipantView extends RelativeLayout {
     private void showAvatar() {
         ivAvatar.setTag(R.id.avatar_tag, userInfo);
         if (userInfo == null || TextUtils.isEmpty(userInfo.getAvatarUrl())) {
+            if (ivAvatar.getTag() instanceof Request) {
+                ((Request)ivAvatar.getTag()).clear();
+            }
             ivAvatar.setImageResource(R.drawable.default_avatar);
             return;
         }
