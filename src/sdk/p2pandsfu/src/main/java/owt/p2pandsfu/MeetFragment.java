@@ -4,12 +4,8 @@ import static org.webrtc.PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUA
 
 import static owt.base.MediaCodecs.AudioCodec.OPUS;
 import static owt.base.MediaCodecs.AudioCodec.PCMU;
-import static owt.base.MediaCodecs.VideoCodec.H264;
-import static owt.base.MediaCodecs.VideoCodec.H265;
 import static owt.base.MediaCodecs.VideoCodec.VP8;
-import static owt.base.MediaCodecs.VideoCodec.VP9;
 
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -99,6 +95,7 @@ public class MeetFragment extends Fragment {
     }
 
     private void initView(View rootView) {
+        initEgl();
         rvSmall = rootView.findViewById(R.id.rvSmall);
         largeVideo = rootView.findViewById(R.id.largeVideo);
         thumbnailAdapter = new ThumbnailAdapter(rootEglBase.getEglBaseContext(), largeVideo.getParticipantView());
@@ -116,18 +113,6 @@ public class MeetFragment extends Fragment {
     }
 
     private void initConferenceClient() {
-        rootEglBase = EglBase.create();
-
-        if (!contextHasInitialized) {
-            ContextInitialization.create()
-                    .setApplicationContext(requireContext().getApplicationContext())
-                    .addIgnoreNetworkType(ContextInitialization.NetworkType.LOOPBACK)
-                    .setVideoHardwareAccelerationOptions(
-                            rootEglBase.getEglBaseContext(),
-                            rootEglBase.getEglBaseContext())
-                    .initialize();
-            contextHasInitialized = true;
-        }
 
         PeerConnection.IceServer iceServer = PeerConnection.IceServer
                 .builder("stun:stun.l.google.com:19302")
@@ -179,6 +164,20 @@ public class MeetFragment extends Fragment {
                 Log.d(TAG, "onDataReceived() called with: peerId = [" + peerId + "], message = [" + message + "]");
             }
         });
+    }
+
+    private void initEgl() {
+        if (!contextHasInitialized) {
+            rootEglBase = EglBase.create();
+            ContextInitialization.create()
+                    .setApplicationContext(requireContext().getApplicationContext())
+                    .addIgnoreNetworkType(ContextInitialization.NetworkType.LOOPBACK)
+                    .setVideoHardwareAccelerationOptions(
+                            rootEglBase.getEglBaseContext(),
+                            rootEglBase.getEglBaseContext())
+                    .initialize();
+            contextHasInitialized = true;
+        }
     }
 
     private void sfuPublish() {
