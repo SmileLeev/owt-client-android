@@ -29,7 +29,6 @@ public class MeetActivity extends AppCompatActivity {
         String roomId = getIntent().getStringExtra("roomId");
         UserInfo userInfo = JSON.parseObject(getIntent().getStringExtra("userInfo"), UserInfo.class);
         Fragment fragment = MeetFragment.newInstance(serverUrl, roomId, userInfo);
-        fragment.setArguments(getIntent().getExtras());
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.flFragment, fragment)
                 .commit();
