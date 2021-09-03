@@ -139,8 +139,10 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
     @WorkerThread
     public void detachRemoteStream(RemoteStream stream) {
         Log.d(TAG, "detachRemoteStream() called with: origin = [" + stream.origin() + "], stream = [" + stream.id() + "]");
-        Item item = getOrCreateItem(stream.origin(), stream);
-        release(item);
+        Item item = getItemByParticipantId(stream.origin());
+        if (item != null) {
+            release(item);
+        }
     }
 
     private void release(Item item) {
@@ -151,13 +153,6 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
         }
         item.connection = null;
         updateFullVideo();
-    }
-
-    @WorkerThread
-    public void detachP2PStream(RemoteStream stream) {
-        Log.d(TAG, "detachP2PStream() called with: origin = [" + stream.origin() + "], stream = [" + stream.id() + "]");
-        Item item = getOrCreateItem(stream.origin(), stream);
-        release(item);
     }
 
     private void notifyItemIfExists(int pos) {

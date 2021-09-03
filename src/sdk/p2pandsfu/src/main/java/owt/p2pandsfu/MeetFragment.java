@@ -143,7 +143,7 @@ public class MeetFragment extends Fragment {
                         remoteStream.addObserver(new owt.base.RemoteStream.StreamObserver() {
                             @Override
                             public void onEnded() {
-                                thumbnailAdapter.detachP2PStream(remoteStream);
+                                thumbnailAdapter.detachRemoteStream(remoteStream);
                             }
 
                             @Override
