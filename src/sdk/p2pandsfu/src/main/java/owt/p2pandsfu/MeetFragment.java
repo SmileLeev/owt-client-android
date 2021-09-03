@@ -371,7 +371,7 @@ public class MeetFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         initLocal();
         initConferenceClient();
-        join();
+        executor.execute(this::join);
     }
 
     @Override
