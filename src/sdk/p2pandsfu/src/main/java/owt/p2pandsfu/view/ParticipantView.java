@@ -20,6 +20,8 @@ import com.bumptech.glide.Glide;
 import org.webrtc.EglBase;
 import org.webrtc.SurfaceViewRenderer;
 
+import java.util.Objects;
+
 import owt.base.LocalStream;
 import owt.base.Stream;
 import owt.p2pandsfu.BuildConfig;
@@ -143,6 +145,9 @@ public class ParticipantView extends RelativeLayout {
             renderer.setZOrderMediaOverlay(onTop);
         } else {
             ivAvatar.setVisibility(View.VISIBLE);
+            if (userInfo != ivAvatar.getTag(R.id.avatar_tag)) {
+                showAvatar();
+            }
             renderer.setZOrderMediaOverlay(false);
         }
     }
@@ -159,20 +164,26 @@ public class ParticipantView extends RelativeLayout {
     }
 
     public void setUserInfo(@NonNull String participantId, @Nullable UserInfo userInfo) {
-        if (this.userInfo == userInfo) {
+        if (TextUtils.equals(this.participantId, participantId)) {
             return;
         }
-        this.participantId = participantId;
         this.userInfo = userInfo;
         runOnUiThread(() -> {
             tvDebug.setText(participantId);
-            if (userInfo == null || TextUtils.isEmpty(userInfo.getAvatarUrl())) {
-                ivAvatar.setImageResource(R.drawable.default_avatar);
-                return;
+            if (stream == null) {
+                showAvatar();
             }
-            Log.d(TAG, "load avatar: url = [" + userInfo.getAvatarUrl() + "]");
-            Glide.with(getContext()).load(userInfo.getAvatarUrl()).into(ivAvatar);
         });
+    }
+
+    private void showAvatar() {
+        ivAvatar.setTag(R.id.avatar_tag, userInfo);
+        if (userInfo == null || TextUtils.isEmpty(userInfo.getAvatarUrl())) {
+            ivAvatar.setImageResource(R.drawable.default_avatar);
+            return;
+        }
+        Log.d(TAG, "load avatar: url = [" + userInfo.getAvatarUrl() + "]");
+        Glide.with(getContext()).load(userInfo.getAvatarUrl()).into(ivAvatar);
     }
 
     public Stream getStream() {
