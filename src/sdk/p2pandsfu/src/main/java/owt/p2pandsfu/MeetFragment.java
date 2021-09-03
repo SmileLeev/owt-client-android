@@ -77,7 +77,6 @@ public class MeetFragment extends Fragment {
     private Handler handler = new Handler(Looper.getMainLooper());
     private String serverUrl;
     private String roomId;
-    private String avatarUrl;
     private ConferenceClient conferenceClient;
     private ConferenceInfo conferenceInfo;
     private LocalStream localStream;
