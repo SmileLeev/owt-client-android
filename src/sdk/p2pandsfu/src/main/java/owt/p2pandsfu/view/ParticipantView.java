@@ -1,5 +1,6 @@
 package owt.p2pandsfu.view;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
 import android.os.Handler;
@@ -188,6 +189,9 @@ public class ParticipantView extends RelativeLayout {
             return;
         }
         Log.d(TAG, "load avatar: url = [" + userInfo.getAvatarUrl() + "]");
+        if (getContext() instanceof Activity && ((Activity) getContext()).isFinishing()) {
+            return;
+        }
         Glide.with(getContext()).load(userInfo.getAvatarUrl()).into(ivAvatar);
     }
 
