@@ -97,7 +97,9 @@ public class MeetFragment extends Fragment {
         initEgl();
         rvSmall = rootView.findViewById(R.id.rvSmall);
         largeVideo = rootView.findViewById(R.id.largeVideo);
-        thumbnailAdapter = new ThumbnailAdapter(rootEglBase.getEglBaseContext(), largeVideo.getParticipantView());
+        EglBase.Context eglBaseContext = rootEglBase.getEglBaseContext();
+        largeVideo.initEgl(eglBaseContext);
+        thumbnailAdapter = new ThumbnailAdapter(eglBaseContext, largeVideo.getParticipantView());
         rvSmall.setAdapter(thumbnailAdapter);
     }
 
