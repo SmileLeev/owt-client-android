@@ -250,6 +250,11 @@ public class MeetFragment extends Fragment {
                 for (RemoteStream remoteStream : conferenceInfo.getRemoteStreams()) {
                     subscribeForward(remoteStream);
                 }
+                runOnUiThread(() -> {
+                    for (Participant participant : conferenceInfo.getParticipants()) {
+                        thumbnailAdapter.add(participant.id, userInfoMap.get(participant.id));
+                    }
+                });
             }
 
             @Override
