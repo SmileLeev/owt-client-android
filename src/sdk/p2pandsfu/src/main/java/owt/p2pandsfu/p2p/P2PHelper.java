@@ -62,7 +62,7 @@ public class P2PHelper {
         if (!isEnabled()) {
             return;
         }
-        setEnabled(conferenceInfo.getParticipants().size() <= 4);
+        setEnabled(conferenceInfo.getParticipants().size() <= 2);
         if (!isEnabled()) {
             onServerDisconnected();
             if (onP2PDisabledListener != null) {
