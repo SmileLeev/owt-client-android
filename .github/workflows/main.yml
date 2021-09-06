@@ -83,10 +83,22 @@ jobs:
         alias: ${{ env.keyAlias }}
         keyStorePassword: ${{ env.storePassword }}
         keyPassword: ${{ env.keyPassword }}
+    - uses: AoEiuV020/sign-android-release@v2
+      name: Sign p2pandsfu APK
+      env:
+        SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+      if: ${{ env.ANDROID_SIGN == 'true' }}
+      with:
+        releaseDirectory: src/sample/p2pandsfu/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+        alias: ${{ env.keyAlias }}
+        keyStorePassword: ${{ env.storePassword }}
+        keyPassword: ${{ env.keyPassword }}
     - name: pick release file
       run: |
         mv ./src/sample/conference/build/outputs/apk/release/*.apk conference-$BUILD_NAME_WITH_VERSION.apk
         mv ./src/sample/p2p/build/outputs/apk/release/*.apk p2p-$BUILD_NAME_WITH_VERSION.apk
+        mv ./src/sample/p2pandsfu/build/outputs/apk/release/*.apk p2pandsfu-$BUILD_NAME_WITH_VERSION.apk
     - name: Upload APK conference
       uses: actions/upload-artifact@master
       with:
@@ -97,6 +109,11 @@ jobs:
       with:
         name: p2p-build
         path: p2p-${{ env.BUILD_NAME_WITH_VERSION }}.apk
+    - name: Upload APK p2pandsfu
+      uses: actions/upload-artifact@master
+      with:
+        name: p2pandsfu-build
+        path: p2pandsfu-${{ env.BUILD_NAME_WITH_VERSION }}.apk
     - name: create release
       if: ${{ env.CREATE_RELEASE == 'true' }}
       id: create_release
@@ -128,6 +145,16 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: p2p-${{ env.BUILD_NAME_WITH_VERSION }}.apk
         asset_name: p2p-${{ env.BUILD_NAME_WITH_VERSION }}.apk
+        asset_content_type: application/zip
+    - name: Upload Release Asset p2pandsfu
+      if: ${{ env.CREATE_RELEASE == 'true' }}
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: p2pandsfu-${{ env.BUILD_NAME_WITH_VERSION }}.apk
+        asset_name: p2pandsfu-${{ env.BUILD_NAME_WITH_VERSION }}.apk
         asset_content_type: application/zip
     - name: public release
       if: ${{ env.CREATE_RELEASE == 'true' }}
