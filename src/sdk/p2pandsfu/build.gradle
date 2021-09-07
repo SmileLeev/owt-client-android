@@ -35,7 +35,7 @@ android {
 }
 
 dependencies {
-    implementation files('../../../dependencies/libwebrtc/libwebrtc.jar')
+    implementation(name: 'libwebrtc', ext: 'jar')
     implementation project(':src:sdk:base')
     implementation project(':src:sdk:conference')
     implementation 'com.github.bumptech.glide:glide:3.7.0'
