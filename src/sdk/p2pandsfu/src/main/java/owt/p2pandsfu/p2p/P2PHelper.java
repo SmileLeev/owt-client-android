@@ -76,6 +76,10 @@ public class P2PHelper {
                         @Override
                         public void onFailure(OwtError error) {
                             Log.d(TAG, "onFailure() called with: error = [" + error.errorMessage + "]");
+                            setEnabled(false);
+                            if (onP2PDisabledListener != null) {
+                                onP2PDisabledListener.onP2PDisabled();
+                            }
                         }
                     });
                 }
