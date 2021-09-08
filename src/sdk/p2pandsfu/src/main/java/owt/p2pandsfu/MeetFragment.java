@@ -32,6 +32,7 @@ import org.webrtc.PeerConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -132,37 +133,15 @@ public class MeetFragment extends Fragment {
                 .build();
         conferenceClient = new ConferenceClient(configuration);
         conferenceClient.addObserver(new MyConferenceClientObserver());
-        p2PHelper.initClient(new P2PClient.P2PClientObserver() {
+        p2PHelper.initClient(new P2PHelper.P2PAttachListener() {
             @Override
-            public void onStreamAdded(P2PRemoteStream remoteStream) {
-                p2PHelper.publish(remoteStream.origin(), new ActionCallback<P2PPublication>() {
-                    @Override
-                    public void onSuccess(P2PPublication result) {
-                        Log.d(TAG, "onSuccess() called with: result = [" + result.id() + "]");
-                        thumbnailAdapter.attachRemoteStream(Connection.getInstance(result), remoteStream);
-                        remoteStream.addObserver(new owt.base.RemoteStream.StreamObserver() {
-                            @Override
-                            public void onEnded() {
-                                thumbnailAdapter.detachRemoteStream(remoteStream);
-                            }
-
-                            @Override
-                            public void onUpdated() {
-                                Log.d(TAG, "onUpdated() called");
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onFailure(OwtError error) {
-                        Log.d(TAG, "onFailure() called with: error = [" + error.errorMessage + "]");
-                    }
-                });
+            public void onAttach(String participantId, Connection connection, P2PRemoteStream remoteStream) {
+                thumbnailAdapter.attachRemoteStream(connection, remoteStream);
             }
 
             @Override
-            public void onDataReceived(String peerId, String message) {
-                Log.d(TAG, "onDataReceived() called with: peerId = [" + peerId + "], message = [" + message + "]");
+            public void onDetach(String participantId, P2PRemoteStream remoteStream) {
+                thumbnailAdapter.detachRemoteStream(remoteStream);
             }
         });
     }

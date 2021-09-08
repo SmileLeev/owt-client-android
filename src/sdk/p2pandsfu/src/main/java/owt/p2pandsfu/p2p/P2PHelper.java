@@ -8,6 +8,7 @@ import android.util.Log;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import owt.base.ActionCallback;
 import owt.base.LocalStream;
@@ -15,6 +16,7 @@ import owt.base.OwtError;
 import owt.base.VideoEncodingParameters;
 import owt.conference.ConferenceInfo;
 import owt.conference.Participant;
+import owt.p2pandsfu.connection.Connection;
 
 public class P2PHelper {
     public static final String TAG = "P2PHelper";
@@ -22,14 +24,17 @@ public class P2PHelper {
     private boolean enabled = true;
     private ConferenceInfo conferenceInfo;
     private LocalStream localStream;
-    private Map<String, P2PPublication> publicationMap = new HashMap<>();
+    private Map<String, P2PRemoteStream> remoteStreamMap = new WeakHashMap<>();
+    private Map<String, P2PPublication> publicationMap = new WeakHashMap<>();
     private OnP2PDisabledListener onP2PDisabledListener;
+    private P2PAttachListener attachListener;
 
     public void onServerDisconnected() {
         p2PClient.onServerDisconnected();
     }
 
-    public void initClient(P2PClient.P2PClientObserver observer) {
+    public void initClient(P2PAttachListener attachListener) {
+        this.attachListener = attachListener;
         VideoEncodingParameters h264 = new VideoEncodingParameters(H264);
         VideoEncodingParameters h265 = new VideoEncodingParameters(H265);
         VideoEncodingParameters vp8 = new VideoEncodingParameters(VP8);
@@ -39,7 +44,64 @@ public class P2PHelper {
                 .addVideoParameters(h265)
                 .build();
         p2PClient = new P2PClient(configuration, new P2PSocketSignalingChannel());
-        p2PClient.addObserver(observer);
+        p2PClient.addObserver(new P2PClient.P2PClientObserver() {
+            @Override
+            public void onStreamAdded(P2PRemoteStream remoteStream) {
+                Log.d(TAG, "onStreamAdded() called with: remoteStream = [" + remoteStream.id() + "]");
+                String participantId = remoteStream.origin();
+                remoteStreamMap.put(participantId, remoteStream);
+                remoteStream.addObserver(new owt.base.RemoteStream.StreamObserver() {
+                    @Override
+                    public void onEnded() {
+                        Log.d(TAG, "onEnded() called");
+                        if (attachListener != null) {
+                            attachListener.onDetach(participantId, remoteStream);
+                        }
+                    }
+
+                    @Override
+                    public void onUpdated() {
+                        Log.d(TAG, "onUpdated() called");
+                    }
+                });
+                if (publicationMap.containsKey(participantId)) {
+                    callAttach(participantId);
+                } else {
+                    publish(participantId, new ActionCallback<P2PPublication>() {
+                        @Override
+                        public void onSuccess(P2PPublication result) {
+                            Log.d(TAG, "onSuccess() called with: result = [" + result.id() + "]");
+                        }
+
+                        @Override
+                        public void onFailure(OwtError error) {
+                            Log.d(TAG, "onFailure() called with: error = [" + error.errorMessage + "]");
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onDataReceived(String peerId, String message) {
+                Log.d(TAG, "onDataReceived() called with: peerId = [" + peerId + "], message = [" + message + "]");
+            }
+        });
+    }
+
+    private void callAttach(String participantId) {
+        P2PPublication publication = publicationMap.get(participantId);
+        if (publication == null) {
+            Log.d(TAG, "callAttach: publication == null, participantId: " + participantId);
+            return;
+        }
+        P2PRemoteStream remoteStream = remoteStreamMap.get(participantId);
+        if (remoteStream == null) {
+            Log.d(TAG, "callAttach: remoteStream == null, participantId: " + participantId);
+            return;
+        }
+        if (attachListener != null) {
+            attachListener.onAttach(participantId, Connection.getInstance(publication), remoteStream);
+        }
     }
 
     public void onJoinSuccess(ConferenceInfo conferenceInfo, P2PSocket p2PSocket, OnP2PDisabledListener onP2PDisabledListener) {
@@ -87,11 +149,33 @@ public class P2PHelper {
         if (!isEnabled()) {
             return;
         }
+        if (publicationMap.containsKey(participantId)) {
+            Log.d(TAG, "publish: duplicate publish");
+            return;
+        }
         Log.d(TAG, "publish() called with: participant = [" + participantId + "]");
-        p2PClient.publish(participantId, localStream, callback);
+        p2PClient.publish(participantId, localStream, new ActionCallback<P2PPublication>() {
+            @Override
+            public void onSuccess(P2PPublication result) {
+                publicationMap.put(participantId, result);
+                callAttach(participantId);
+                callback.onSuccess(result);
+            }
+
+            @Override
+            public void onFailure(OwtError error) {
+                callback.onFailure(error);
+            }
+        });
     }
 
     public interface OnP2PDisabledListener {
         void onP2PDisabled();
+    }
+
+    public interface P2PAttachListener {
+        void onAttach(String participantId, Connection connection, P2PRemoteStream remoteStream);
+
+        void onDetach(String participantId, P2PRemoteStream remoteStream);
     }
 }
