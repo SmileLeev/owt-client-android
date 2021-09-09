@@ -121,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable editable) {
-                getSp().edit().putString("serverUrl", editable.toString()).apply();
+                getSp().edit().putString("roomId", editable.toString()).apply();
             }
         });
     }
