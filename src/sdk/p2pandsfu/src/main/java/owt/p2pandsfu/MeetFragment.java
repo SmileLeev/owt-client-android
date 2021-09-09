@@ -1,7 +1,6 @@
 package owt.p2pandsfu;
 
 import static org.webrtc.PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
-
 import static owt.base.MediaCodecs.AudioCodec.OPUS;
 import static owt.base.MediaCodecs.AudioCodec.PCMU;
 import static owt.base.MediaCodecs.VideoCodec.VP8;
@@ -33,7 +32,6 @@ import org.webrtc.PeerConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -58,7 +56,6 @@ import owt.conference.Subscription;
 import owt.p2pandsfu.bean.Message;
 import owt.p2pandsfu.bean.UserInfo;
 import owt.p2pandsfu.connection.Connection;
-import owt.p2pandsfu.p2p.P2PClient;
 import owt.p2pandsfu.p2p.P2PHelper;
 import owt.p2pandsfu.p2p.P2PPublication;
 import owt.p2pandsfu.p2p.P2PRemoteStream;
@@ -250,11 +247,12 @@ public class MeetFragment extends Fragment {
                 for (RemoteStream remoteStream : conferenceInfo.getRemoteStreams()) {
                     subscribeForward(remoteStream);
                 }
-                runOnUiThread(() -> {
-                    for (Participant participant : conferenceInfo.getParticipants()) {
+                for (Participant participant : conferenceInfo.getParticipants()) {
+                    runOnUiThread(() -> {
                         thumbnailAdapter.add(participant.id, userInfoMap.get(participant.id));
-                    }
-                });
+                    });
+                    observeLeft(participant);
+                }
             }
 
             @Override
@@ -264,6 +262,20 @@ public class MeetFragment extends Fragment {
                         .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                             requireActivity().finish();
                         });
+            }
+        });
+    }
+
+    private void observeLeft(Participant participant) {
+        participant.addObserver(new Participant.ParticipantObserver() {
+            @Override
+            public void onLeft() {
+                participant.removeObserver(this);
+                UserInfo userInfo = userInfoMap.remove(participant.id);
+                Log.d(TAG, "onLeft() called: participant.id = " + participant.id + ", userInfo = " + userInfo);
+                runOnUiThread(() -> {
+                    onMemberLeft(participant.id, userInfo);
+                });
             }
         });
     }
@@ -447,17 +459,7 @@ public class MeetFragment extends Fragment {
             runOnUiThread(() -> {
                 onMemberJoined(participant.id, userInfoMap.get(participant.id));
             });
-            participant.addObserver(new Participant.ParticipantObserver() {
-                @Override
-                public void onLeft() {
-                    participant.removeObserver(this);
-                    UserInfo userInfo = userInfoMap.remove(participant.id);
-                    Log.d(TAG, "onLeft() called: participant.id = " + participant.id + ", userInfo = " + userInfo);
-                    runOnUiThread(() -> {
-                        onMemberLeft(participant.id, userInfo);
-                    });
-                }
-            });
+            observeLeft(participant);
         }
 
         @Override
