@@ -102,6 +102,13 @@ public class MeetFragment extends Fragment {
         largeVideo.initEgl(eglBaseContext);
         thumbnailAdapter = new ThumbnailAdapter(eglBaseContext, largeVideo.getParticipantView());
         rvSmall.setAdapter(thumbnailAdapter);
+        initToolbox(rootView.findViewById(R.id.llToolbox));
+    }
+
+    private void initToolbox(ViewGroup llToolbox) {
+        llToolbox.findViewById(R.id.btnHangUp).setOnClickListener(v -> {
+            requireActivity().finish();
+        });
     }
 
     private void initLocal() {
