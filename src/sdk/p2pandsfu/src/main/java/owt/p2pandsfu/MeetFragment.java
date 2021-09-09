@@ -26,6 +26,7 @@ import com.alibaba.fastjson.JSON;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.webrtc.CameraVideoCapturer;
 import org.webrtc.EglBase;
 import org.webrtc.PeerConnection;
 
@@ -108,6 +109,19 @@ public class MeetFragment extends Fragment {
     private void initToolbox(ViewGroup llToolbox) {
         llToolbox.findViewById(R.id.btnHangUp).setOnClickListener(v -> {
             requireActivity().finish();
+        });
+        llToolbox.findViewById(R.id.btnCameraSwitch).setOnClickListener(v -> {
+            capturer.switchCamera(new CameraVideoCapturer.CameraSwitchHandler() {
+                @Override
+                public void onCameraSwitchDone(boolean isFrontCamera) {
+                    Log.d(TAG, "onCameraSwitchDone() called with: isFrontCamera = [" + isFrontCamera + "]");
+                }
+
+                @Override
+                public void onCameraSwitchError(String errorDescription) {
+
+                }
+            });
         });
     }
 
