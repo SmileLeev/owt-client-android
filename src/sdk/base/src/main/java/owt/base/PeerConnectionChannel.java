@@ -173,8 +173,8 @@ public abstract class PeerConnectionChannel
     protected void drainRemoteCandidates() {
         DCHECK(pcExecutor);
         DCHECK(queuedRemoteCandidates);
-        synchronized (remoteIceLock) {
-            pcExecutor.execute(() -> {
+        pcExecutor.execute(() -> {
+            synchronized (remoteIceLock) {
                 Iterator<IceCandidate> iterator = queuedRemoteCandidates.iterator();
                 while (iterator.hasNext()) {
                     if (disposed()) {
@@ -185,8 +185,8 @@ public abstract class PeerConnectionChannel
                     peerConnection.addIceCandidate(candidate);
                     iterator.remove();
                 }
-            });
-        }
+            }
+        });
     }
 
     private void setRemoteDescription(final SessionDescription remoteDescription) {
@@ -473,15 +473,15 @@ public abstract class PeerConnectionChannel
     @Override
     public void onStandardizedIceConnectionChange(PeerConnection.IceConnectionState newState) {
     }
-        
+
     @Override
     public void onConnectionChange(PeerConnection.PeerConnectionState newState) {
     }
-    
+
     @Override
     public void onSelectedCandidatePairChanged(CandidatePairChangeEvent event) {
     }
-        
+
     @Override
     abstract public void onIceConnectionChange(
             PeerConnection.IceConnectionState iceConnectionState);
@@ -495,7 +495,7 @@ public abstract class PeerConnectionChannel
     }
 
     @Override
-    abstract public void onIceCandidate(IceCandidate iceCandidate); 
+    abstract public void onIceCandidate(IceCandidate iceCandidate);
 
     @Override
     abstract public void onIceCandidatesRemoved(IceCandidate[] iceCandidates);
@@ -523,11 +523,11 @@ public abstract class PeerConnectionChannel
     @Override
     public void onAddTrack(RtpReceiver rtpReceiver, MediaStream[] mediaStreams) {
     }
-        
+
     @Override
     public void onTrack(RtpTransceiver transceiver) {
     }
-        
+
     //DataChannel.Observer interface
     @Override
     public void onBufferedAmountChange(long l) {
