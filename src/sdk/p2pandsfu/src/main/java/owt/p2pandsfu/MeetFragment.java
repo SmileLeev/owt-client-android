@@ -5,6 +5,7 @@ import static owt.base.MediaCodecs.AudioCodec.OPUS;
 import static owt.base.MediaCodecs.AudioCodec.PCMU;
 import static owt.base.MediaCodecs.VideoCodec.VP8;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -154,11 +155,17 @@ public class MeetFragment extends Fragment {
         p2PHelper.initClient(new P2PHelper.P2PAttachListener() {
             @Override
             public void onAttach(String participantId, Connection connection, P2PRemoteStream remoteStream) {
+                if (disposed()) {
+                    return;
+                }
                 thumbnailAdapter.attachRemoteStream(connection, remoteStream);
             }
 
             @Override
             public void onDetach(String participantId, P2PRemoteStream remoteStream) {
+                if (disposed()) {
+                    return;
+                }
                 thumbnailAdapter.detachRemoteStream(remoteStream);
             }
         });
@@ -184,6 +191,9 @@ public class MeetFragment extends Fragment {
             public void onSuccess(final Publication result) {
 
                 runOnUiThread(() -> {
+                    if (disposed()) {
+                        return;
+                    }
                     thumbnailAdapter.updateLocal(Connection.getInstance(result));
                 });
 
@@ -249,6 +259,9 @@ public class MeetFragment extends Fragment {
                 }
                 for (Participant participant : conferenceInfo.getParticipants()) {
                     runOnUiThread(() -> {
+                        if (disposed()) {
+                            return;
+                        }
                         thumbnailAdapter.add(participant.id, userInfoMap.get(participant.id));
                     });
                     observeLeft(participant);
@@ -257,6 +270,9 @@ public class MeetFragment extends Fragment {
 
             @Override
             public void onFailure(OwtError e) {
+                if (disposed()) {
+                    return;
+                }
                 new AlertDialog.Builder(requireContext())
                         .setMessage("join room failed")
                         .setPositiveButton(android.R.string.yes, (dialog, which) -> {
@@ -313,6 +329,9 @@ public class MeetFragment extends Fragment {
                 new ActionCallback<Subscription>() {
                     @Override
                     public void onSuccess(Subscription result) {
+                        if (disposed()) {
+                            return;
+                        }
                         thumbnailAdapter.attachRemoteStream(Connection.getInstance(result), remoteStream);
                     }
 
@@ -325,6 +344,9 @@ public class MeetFragment extends Fragment {
     }
 
     private void sendSelfInfo(String to) {
+        if (disposed()) {
+            return;
+        }
         Message message = new Message(Message.TYPE_USER_INFO, JSON.toJSONString(selfInfo));
         conferenceClient.send(to, JSON.toJSONString(message), new ActionCallback<Void>() {
             @Override
@@ -341,6 +363,9 @@ public class MeetFragment extends Fragment {
 
     @UiThread
     private void onMemberJoined(String participantId, @Nullable UserInfo userInfo) {
+        if (disposed()) {
+            return;
+        }
         if (!selfInfo.equals(userInfo)) {
             Toast.makeText(requireContext(), getUsername(participantId, userInfo) + " joined", Toast.LENGTH_SHORT).show();
         }
@@ -357,15 +382,26 @@ public class MeetFragment extends Fragment {
     @UiThread
     private void onMemberUpdate(UserInfo userInfo) {
         Log.d(TAG, "onMemberUpdate() called with: userInfo = [" + userInfo + "]");
+        if (disposed()) {
+            return;
+        }
         thumbnailAdapter.update(userInfo);
     }
 
     @UiThread
     private void onMemberLeft(String participantId, @Nullable UserInfo userInfo) {
+        if (disposed()) {
+            return;
+        }
         if (!selfInfo.equals(userInfo)) {
             Toast.makeText(requireContext(), getUsername(participantId, userInfo) + " left", Toast.LENGTH_SHORT).show();
         }
         thumbnailAdapter.remove(participantId, userInfo);
+    }
+
+    private boolean disposed() {
+        Activity activity = getActivity();
+        return activity == null || activity.isFinishing();
     }
 
     @Override
@@ -431,6 +467,9 @@ public class MeetFragment extends Fragment {
                 @Override
                 public void onEnded() {
                     Log.d(TAG, "onEnded() called: remoteStream.id = " + remoteStream.id() + ", userInfo = " + userInfoMap.get(remoteStream.origin()));
+                    if (disposed()) {
+                        return;
+                    }
                     thumbnailAdapter.detachRemoteStream(remoteStream);
                 }
 
