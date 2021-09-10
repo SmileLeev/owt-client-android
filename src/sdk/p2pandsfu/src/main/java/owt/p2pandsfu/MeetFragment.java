@@ -90,6 +90,7 @@ public class MeetFragment extends Fragment {
     private LargeVideo largeVideo;
     private ThumbnailAdapter thumbnailAdapter;
     private boolean audioMuted = false;
+    private boolean videoMuted = false;
 
     public MeetFragment() {
         // Required empty public constructor
@@ -115,6 +116,16 @@ public class MeetFragment extends Fragment {
             } else {
                 v.setBackgroundColor(Color.parseColor("#00ff00"));
                 localStream.enableAudio();
+            }
+        });
+        llToolbox.findViewById(R.id.btnVideoMute).setOnClickListener(v -> {
+            videoMuted = !videoMuted;
+            if (videoMuted) {
+                v.setBackgroundColor(Color.parseColor("#ff0000"));
+                localStream.disableVideo();
+            } else {
+                v.setBackgroundColor(Color.parseColor("#00ff00"));
+                localStream.enableVideo();
             }
         });
         llToolbox.findViewById(R.id.btnHangUp).setOnClickListener(v -> {

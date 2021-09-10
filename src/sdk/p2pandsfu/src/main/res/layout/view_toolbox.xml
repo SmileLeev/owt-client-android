@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:background="#0f0"
         android:padding="10dp"
-        android:text=" M "
+        android:text=" A "
         android:textColor="#fff"
         android:textSize="30sp" />
 
@@ -38,6 +38,16 @@
         android:background="#f00"
         android:padding="10dp"
         android:text=" H "
+        android:textColor="#fff"
+        android:textSize="30sp" />
+
+    <TextView
+        android:id="@+id/btnVideoMute"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#0f0"
+        android:padding="10dp"
+        android:text=" V "
         android:textColor="#fff"
         android:textSize="30sp" />
 
