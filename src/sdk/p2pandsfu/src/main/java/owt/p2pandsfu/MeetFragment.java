@@ -6,6 +6,7 @@ import static owt.base.MediaCodecs.AudioCodec.PCMU;
 import static owt.base.MediaCodecs.VideoCodec.VP8;
 
 import android.app.Activity;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -88,6 +89,7 @@ public class MeetFragment extends Fragment {
     private RecyclerView rvSmall;
     private LargeVideo largeVideo;
     private ThumbnailAdapter thumbnailAdapter;
+    private boolean audioMuted = false;
 
     public MeetFragment() {
         // Required empty public constructor
@@ -105,6 +107,16 @@ public class MeetFragment extends Fragment {
     }
 
     private void initToolbox(ViewGroup llToolbox) {
+        llToolbox.findViewById(R.id.btnAudioMute).setOnClickListener(v -> {
+            audioMuted = !audioMuted;
+            if (audioMuted) {
+                v.setBackgroundColor(Color.parseColor("#ff0000"));
+                localStream.disableAudio();
+            } else {
+                v.setBackgroundColor(Color.parseColor("#00ff00"));
+                localStream.enableAudio();
+            }
+        });
         llToolbox.findViewById(R.id.btnHangUp).setOnClickListener(v -> {
             requireActivity().finish();
         });
