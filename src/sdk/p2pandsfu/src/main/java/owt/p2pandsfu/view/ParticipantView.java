@@ -105,6 +105,7 @@ public class ParticipantView extends RelativeLayout {
                 _detachStream();
             }
         }
+        updateAvatar();
     }
 
     public void detachStream(Stream stream) {
@@ -112,6 +113,7 @@ public class ParticipantView extends RelativeLayout {
         if (oldStream == stream) {
             _detachStream();
         }
+        updateAvatar();
     }
 
     private void _attachStream(Stream stream) {
