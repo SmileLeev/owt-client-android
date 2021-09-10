@@ -143,7 +143,7 @@ public class ParticipantView extends RelativeLayout {
             runOnUiThread(this::updateAvatar);
             return;
         }
-        if (stream != null) {
+        if (stream != null && (userInfo == null || !userInfo.isVideoMuted())) {
             ivAvatar.setVisibility(View.GONE);
             renderer.setZOrderMediaOverlay(onTop);
         } else {

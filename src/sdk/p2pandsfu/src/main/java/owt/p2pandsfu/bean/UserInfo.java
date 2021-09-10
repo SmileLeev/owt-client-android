@@ -9,6 +9,8 @@ public class UserInfo {
     private String participantId;
     private String username;
     private String avatarUrl;
+    private boolean audioMuted;
+    private boolean videoMuted;
 
     @Override
     public String toString() {
@@ -16,6 +18,8 @@ public class UserInfo {
                 "participantId='" + participantId + '\'' +
                 ", username='" + username + '\'' +
                 ", avatarUrl='" + avatarUrl + '\'' +
+                ", audioMuted=" + audioMuted +
+                ", videoMuted=" + videoMuted +
                 '}';
     }
 
@@ -25,6 +29,22 @@ public class UserInfo {
         if (o == null || getClass() != o.getClass()) return false;
         UserInfo userInfo = (UserInfo) o;
         return TextUtils.equals(participantId, userInfo.participantId);
+    }
+
+    public boolean isAudioMuted() {
+        return audioMuted;
+    }
+
+    public void setAudioMuted(boolean audioMuted) {
+        this.audioMuted = audioMuted;
+    }
+
+    public boolean isVideoMuted() {
+        return videoMuted;
+    }
+
+    public void setVideoMuted(boolean videoMuted) {
+        this.videoMuted = videoMuted;
     }
 
     @Override

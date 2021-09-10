@@ -89,8 +89,6 @@ public class MeetFragment extends Fragment {
     private RecyclerView rvSmall;
     private LargeVideo largeVideo;
     private ThumbnailAdapter thumbnailAdapter;
-    private boolean audioMuted = false;
-    private boolean videoMuted = false;
 
     public MeetFragment() {
         // Required empty public constructor
@@ -109,24 +107,26 @@ public class MeetFragment extends Fragment {
 
     private void initToolbox(ViewGroup llToolbox) {
         llToolbox.findViewById(R.id.btnAudioMute).setOnClickListener(v -> {
-            audioMuted = !audioMuted;
-            if (audioMuted) {
+            selfInfo.setAudioMuted(!selfInfo.isAudioMuted());
+            if (selfInfo.isAudioMuted()) {
                 v.setBackgroundColor(Color.parseColor("#ff0000"));
                 localStream.disableAudio();
             } else {
                 v.setBackgroundColor(Color.parseColor("#00ff00"));
                 localStream.enableAudio();
             }
+            sendSelfInfo(null);
         });
         llToolbox.findViewById(R.id.btnVideoMute).setOnClickListener(v -> {
-            videoMuted = !videoMuted;
-            if (videoMuted) {
+            selfInfo.setVideoMuted(!selfInfo.isVideoMuted());
+            if (selfInfo.isVideoMuted()) {
                 v.setBackgroundColor(Color.parseColor("#ff0000"));
                 localStream.disableVideo();
             } else {
                 v.setBackgroundColor(Color.parseColor("#00ff00"));
                 localStream.enableVideo();
             }
+            sendSelfInfo(null);
         });
         llToolbox.findViewById(R.id.btnHangUp).setOnClickListener(v -> {
             requireActivity().finish();
