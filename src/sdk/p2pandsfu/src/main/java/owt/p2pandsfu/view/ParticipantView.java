@@ -40,6 +40,7 @@ public class ParticipantView extends RelativeLayout {
     private ImageView ivAvatar;
     private TextView tvDebug;
     private boolean onTop;
+    private Boolean showVideo = null;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
     private boolean isFrontCamera;
     private String participantId;
@@ -145,7 +146,13 @@ public class ParticipantView extends RelativeLayout {
             runOnUiThread(this::updateAvatar);
             return;
         }
-        if (stream != null && (userInfo == null || !userInfo.isVideoMuted())) {
+        Boolean oldShowVideo = showVideo;
+        boolean newShowVideo = stream != null && (userInfo == null || !userInfo.isVideoMuted());
+        if (oldShowVideo != null && oldShowVideo == newShowVideo) {
+            return;
+        }
+        showVideo = newShowVideo;
+        if (newShowVideo) {
             ivAvatar.setVisibility(View.GONE);
             renderer.setZOrderMediaOverlay(onTop);
         } else {
