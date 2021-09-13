@@ -17,13 +17,10 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.GenericRequest;
 import com.bumptech.glide.request.Request;
 
 import org.webrtc.EglBase;
 import org.webrtc.SurfaceViewRenderer;
-
-import java.util.Objects;
 
 import owt.base.LocalStream;
 import owt.base.Stream;
@@ -81,6 +78,8 @@ public class ParticipantView extends RelativeLayout {
     }
 
     public void initEgl(EglBase.Context eglBaseContext) {
+        Log.d(TAG, "initEgl() called with: this@" + Integer.toHexString(this.hashCode())
+                + " eglBaseContext = [" + Integer.toHexString(eglBaseContext.hashCode()) + "]");
         renderer.init(eglBaseContext, null);
         renderer.setMirror(true);
         renderer.setEnableHardwareScaler(true);
@@ -192,7 +191,7 @@ public class ParticipantView extends RelativeLayout {
         ivAvatar.setTag(R.id.avatar_tag, userInfo);
         if (userInfo == null || TextUtils.isEmpty(userInfo.getAvatarUrl())) {
             if (ivAvatar.getTag() instanceof Request) {
-                ((Request)ivAvatar.getTag()).clear();
+                ((Request) ivAvatar.getTag()).clear();
             }
             ivAvatar.setImageResource(R.drawable.default_avatar);
             return;
@@ -214,6 +213,8 @@ public class ParticipantView extends RelativeLayout {
     }
 
     public void release() {
+        Log.d(TAG, "release() called with: this@" + Integer.toHexString(this.hashCode())
+                + " renderer = [" + (renderer == null ? null : Integer.toHexString(renderer.hashCode())) + "]");
         if (renderer == null) {
             return;
         }
