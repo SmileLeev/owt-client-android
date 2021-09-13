@@ -178,6 +178,7 @@ public class ParticipantView extends RelativeLayout {
         if (TextUtils.equals(this.participantId, participantId)) {
             return;
         }
+        this.participantId = participantId;
         this.userInfo = userInfo;
         runOnUiThread(() -> {
             tvDebug.setText(participantId);
