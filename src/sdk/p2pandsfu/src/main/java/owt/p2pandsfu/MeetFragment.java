@@ -89,6 +89,7 @@ public class MeetFragment extends Fragment {
     private RecyclerView rvSmall;
     private LargeVideo largeVideo;
     private ThumbnailAdapter thumbnailAdapter;
+    private MyConferenceClientObserver conferenceClientObserver;
 
     public MeetFragment() {
         // Required empty public constructor
@@ -174,7 +175,8 @@ public class MeetFragment extends Fragment {
                 .setRTCConfiguration(rtcConfiguration)
                 .build();
         conferenceClient = new ConferenceClient(configuration);
-        conferenceClient.addObserver(new MyConferenceClientObserver());
+        conferenceClientObserver = new MyConferenceClientObserver();
+        conferenceClient.addObserver(conferenceClientObserver);
         p2PHelper.initClient(new P2PHelper.P2PAttachListener() {
             @Override
             public void onAttach(String participantId, Connection connection, P2PRemoteStream remoteStream) {
@@ -429,8 +431,32 @@ public class MeetFragment extends Fragment {
 
     @Override
     public void onDestroy() {
+        if (conferenceClientObserver != null) {
+            conferenceClient.removeObserver(conferenceClientObserver);
+        }
         conferenceClient.leave();
+        release();
         super.onDestroy();
+    }
+
+    private void release() {
+        if (capturer != null) {
+            capturer.stopCapture();
+            capturer.dispose();
+            capturer = null;
+        }
+
+        if (localStream != null) {
+            localStream.dispose();
+            localStream = null;
+        }
+        if (largeVideo != null) {
+            largeVideo.release();
+            largeVideo = null;
+        }
+        selfInfo = null;
+        thumbnailAdapter = null;
+        userInfoMap.clear();
     }
 
     public static MeetFragment newInstance(String serverUrl, String roomId, UserInfo userInfo) {
@@ -546,19 +572,7 @@ public class MeetFragment extends Fragment {
         public void onServerDisconnected() {
             p2PHelper.onServerDisconnected();
 
-            if (capturer != null) {
-                capturer.stopCapture();
-                capturer.dispose();
-                capturer = null;
-            }
-
-            if (localStream != null) {
-                localStream.dispose();
-                localStream = null;
-            }
-            selfInfo = null;
-            thumbnailAdapter = null;
-            userInfoMap.clear();
+            release();
         }
     }
 }

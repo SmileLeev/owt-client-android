@@ -128,7 +128,7 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
             Log.d(TAG, "attachRemoteStream: ignore local user");
             return;
         }
-        release(item);
+        stop(item);
         item.stream = stream;
         item.participantId = stream.origin();
         item.connection = connection;
@@ -141,11 +141,11 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
         Log.d(TAG, "detachRemoteStream() called with: origin = [" + stream.origin() + "], stream = [" + stream.id() + "]");
         Item item = getItemByParticipantId(stream.origin());
         if (item != null) {
-            release(item);
+            stop(item);
         }
     }
 
-    private void release(Item item) {
+    private void stop(Item item) {
         _detachStream(item.stream, item.participantView);
         item.stream = null;
         if (item.connection != null) {

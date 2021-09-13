@@ -212,4 +212,14 @@ public class ParticipantView extends RelativeLayout {
         this.isFrontCamera = isFrontCamera;
         renderer.setMirror(stream instanceof LocalStream && isFrontCamera);
     }
+
+    public void release() {
+        if (renderer == null) {
+            return;
+        }
+        _detachStream();
+        renderer.getHolder().getSurface().release();
+        renderer.release();
+        renderer = null;
+    }
 }

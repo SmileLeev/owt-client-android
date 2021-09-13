@@ -1,8 +1,12 @@
 package owt.p2pandsfu.view;
 
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.OnLifecycleEvent;
 import android.content.Context;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
+import android.support.v7.app.AppCompatActivity;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.RelativeLayout;
@@ -38,6 +42,13 @@ public class LargeVideo extends RelativeLayout {
     private void init() {
         View.inflate(getContext(), R.layout.view_large_video, this);
         participantView = findViewById(R.id.participant);
+        AppCompatActivity activity = (AppCompatActivity) getContext();
+        activity.getLifecycle().addObserver(new LifecycleObserver() {
+            @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+            void destroy() {
+                release();
+            }
+        });
     }
 
     public ParticipantView getParticipantView() {
@@ -47,5 +58,9 @@ public class LargeVideo extends RelativeLayout {
     public void initEgl(EglBase.Context eglBaseContext) {
         participantView.initEgl(eglBaseContext);
         participantView.setOnTop(false);
+    }
+
+    public void release() {
+        participantView.release();
     }
 }
