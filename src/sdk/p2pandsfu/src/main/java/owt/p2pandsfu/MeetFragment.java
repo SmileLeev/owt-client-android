@@ -452,6 +452,8 @@ public class MeetFragment extends Fragment {
         }
 
         if (localStream != null) {
+            localStream.disableVideo();
+            localStream.disableAudio();
             localStream.dispose();
             localStream = null;
         }
