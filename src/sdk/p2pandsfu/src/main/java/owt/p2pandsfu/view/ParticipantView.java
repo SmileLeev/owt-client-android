@@ -146,7 +146,7 @@ public class ParticipantView extends RelativeLayout {
             return;
         }
         Boolean oldShowVideo = showVideo;
-        boolean newShowVideo = stream != null && (userInfo == null || !userInfo.isVideoMuted());
+        boolean newShowVideo = stream != null && stream.hasVideo() && (userInfo == null || !userInfo.isVideoMuted());
         if (oldShowVideo != null && oldShowVideo == newShowVideo) {
             return;
         }
@@ -182,9 +182,7 @@ public class ParticipantView extends RelativeLayout {
         this.userInfo = userInfo;
         runOnUiThread(() -> {
             tvDebug.setText(participantId);
-            if (stream == null) {
-                showAvatar();
-            }
+            updateAvatar();
         });
     }
 

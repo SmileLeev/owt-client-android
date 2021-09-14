@@ -127,6 +127,7 @@ public class MeetFragment extends Fragment {
                 v.setBackgroundColor(Color.parseColor("#00ff00"));
                 localStream.enableVideo();
             }
+            thumbnailAdapter.update(selfInfo);
             sendSelfInfo(null);
         });
         llToolbox.findViewById(R.id.btnHangUp).setOnClickListener(v -> {
@@ -556,6 +557,10 @@ public class MeetFragment extends Fragment {
             Message messageBean = Message.fromJson(message);
             if (messageBean.getType() == Message.TYPE_USER_INFO) {
                 UserInfo userInfo = messageBean.getDataBean(UserInfo.class);
+                if (TextUtils.equals(userInfo.getParticipantId(), selfInfo.getParticipantId())) {
+                    // skip self,
+                    return;
+                }
                 boolean exists = userInfoMap.containsKey(userInfo.getParticipantId());
                 userInfoMap.put(userInfo.getParticipantId(), userInfo);
                 runOnUiThread(() -> {
