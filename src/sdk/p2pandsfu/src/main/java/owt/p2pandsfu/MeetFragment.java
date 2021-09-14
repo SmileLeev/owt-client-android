@@ -273,9 +273,13 @@ public class MeetFragment extends Fragment {
             @Override
             public void onSuccess(ConferenceInfo conferenceInfo) {
                 MeetFragment.this.conferenceInfo = conferenceInfo;
-                p2PHelper.onJoinSuccess(conferenceInfo, new P2PSocket(conferenceClient), () -> {
+                if (p2PHelper.isEnabled()) {
+                    p2PHelper.onJoinSuccess(conferenceInfo, new P2PSocket(conferenceClient), () -> {
+                        sfuPublish();
+                    });
+                } else {
                     sfuPublish();
-                });
+                }
                 selfInfo.setParticipantId(conferenceInfo.self().id);
                 thumbnailAdapter.updateLocal(conferenceInfo.self().id);
                 userInfoMap.put(selfInfo.getParticipantId(), selfInfo);
