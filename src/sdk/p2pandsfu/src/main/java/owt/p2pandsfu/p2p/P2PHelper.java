@@ -6,8 +6,12 @@ import static owt.base.MediaCodecs.VideoCodec.VP8;
 
 import android.util.Log;
 
+import org.json.JSONArray;
+
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 
 import owt.base.ActionCallback;
@@ -28,6 +32,7 @@ public class P2PHelper {
     private Map<String, P2PPublication> publicationMap = new WeakHashMap<>();
     private OnP2PDisabledListener onP2PDisabledListener;
     private P2PAttachListener attachListener;
+    private Map<String, ActionCallback<P2PPublication>> publishCache = new HashMap();
 
     public void onServerDisconnected() {
         p2PClient.onServerDisconnected();
@@ -147,6 +152,11 @@ public class P2PHelper {
 
     public void setLocal(LocalStream localStream) {
         this.localStream = localStream;
+        if (!publishCache.isEmpty()) {
+            for (Map.Entry<String, ActionCallback<P2PPublication>> entry : publishCache.entrySet()) {
+                publish(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     public void publish(String participantId, ActionCallback<P2PPublication> callback) {
@@ -158,6 +168,10 @@ public class P2PHelper {
             return;
         }
         Log.d(TAG, "publish() called with: participant = [" + participantId + "]");
+        if (localStream == null) {
+            publishCache.put(participantId, callback);
+            return;
+        }
         p2PClient.publish(participantId, localStream, new ActionCallback<P2PPublication>() {
             @Override
             public void onSuccess(P2PPublication result) {

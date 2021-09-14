@@ -11,7 +11,7 @@ import org.webrtc.CameraEnumerator;
 import owt.base.Stream;
 import owt.base.VideoCapturer;
 
-public final class OwtVideoCapturer extends Camera1Capturer implements VideoCapturer {
+public final class OwtVideoCapturer extends Camera1Capturer implements OwtBaseCapturer {
     private int width, height, fps;
 
     private OwtVideoCapturer(String deviceName, boolean captureToTexture) {
@@ -43,6 +43,7 @@ public final class OwtVideoCapturer extends Camera1Capturer implements VideoCapt
         return fps;
     }
 
+    @Override
     public void startCapture() {
         super.startCapture(getWidth(), getHeight(), getFps());
     }
@@ -56,6 +57,7 @@ public final class OwtVideoCapturer extends Camera1Capturer implements VideoCapt
         super.switchCamera(null);
     }
 
+    @Override
     public void dispose() {
         super.dispose();
     }

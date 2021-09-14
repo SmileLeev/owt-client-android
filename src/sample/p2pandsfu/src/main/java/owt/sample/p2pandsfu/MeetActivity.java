@@ -12,11 +12,12 @@ import owt.p2pandsfu.MeetFragment;
 import owt.p2pandsfu.bean.UserInfo;
 
 public class MeetActivity extends AppCompatActivity {
-    public static void start(Context context, String serverUrl, String roomId, UserInfo userInfo) {
+    public static void start(Context context, String serverUrl, String roomId, UserInfo userInfo, boolean screenSharing) {
         Intent starter = new Intent(context, MeetActivity.class);
         starter.putExtra("serverUrl", serverUrl);
         starter.putExtra("roomId", roomId);
         starter.putExtra("userInfo", JSON.toJSONString(userInfo));
+        starter.putExtra("screenSharing", screenSharing);
         context.startActivity(starter);
     }
 
@@ -28,7 +29,8 @@ public class MeetActivity extends AppCompatActivity {
         String serverUrl = getIntent().getStringExtra("serverUrl");
         String roomId = getIntent().getStringExtra("roomId");
         UserInfo userInfo = JSON.parseObject(getIntent().getStringExtra("userInfo"), UserInfo.class);
-        Fragment fragment = MeetFragment.newInstance(serverUrl, roomId, userInfo);
+        boolean screenSharing = getIntent().getBooleanExtra("screenSharing", false);
+        Fragment fragment = MeetFragment.newInstance(serverUrl, roomId, userInfo, screenSharing);
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.flFragment, fragment)
                 .commit();

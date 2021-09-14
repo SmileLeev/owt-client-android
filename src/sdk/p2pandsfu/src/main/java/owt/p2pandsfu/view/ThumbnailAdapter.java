@@ -96,7 +96,7 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
         renderer.detachStream(stream);
     }
     public void initLocal(LocalStream stream, UserInfo userInfo) {
-        Log.d(TAG, "attachLocalStream() called with: stream = [" + stream.id() + "], userInfo = [" + userInfo + "]");
+        Log.d(TAG, "attachLocalStream() called with: stream = [" + (stream == null ? null : stream.id()) + "], userInfo = [" + userInfo + "]");
         Item item = createItem(null, stream);
         item.local = true;
         item.userInfo = userInfo;
@@ -114,6 +114,14 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
         Log.d(TAG, "attachLocalStream() called with: connection = [" + connection.id() + "]");
         Item item = getLocalItem();
         item.connection = connection;
+        updateFullVideo();
+    }
+
+    public void attachLocalStream(@NonNull LocalStream stream) {
+        Log.d(TAG, "attachLocalStream() called with: stream = [" + stream.id() + "]");
+        Item item = getLocalItem();
+        item.stream = stream;
+        _attackStream(item.stream, item.participantView);
         updateFullVideo();
     }
 

@@ -6,7 +6,14 @@ import static owt.base.MediaCodecs.AudioCodec.PCMU;
 import static owt.base.MediaCodecs.VideoCodec.VP8;
 
 import android.app.Activity;
+import android.arch.lifecycle.Lifecycle;
+import android.arch.lifecycle.LifecycleObserver;
+import android.arch.lifecycle.OnLifecycleEvent;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
+import android.media.projection.MediaProjectionManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -34,6 +41,7 @@ import org.webrtc.PeerConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -63,6 +71,8 @@ import owt.p2pandsfu.p2p.P2PPublication;
 import owt.p2pandsfu.p2p.P2PRemoteStream;
 import owt.p2pandsfu.p2p.P2PSocket;
 import owt.p2pandsfu.utils.HttpUtils;
+import owt.p2pandsfu.utils.OwtBaseCapturer;
+import owt.p2pandsfu.utils.OwtScreenCapturer;
 import owt.p2pandsfu.utils.OwtVideoCapturer;
 import owt.p2pandsfu.view.LargeVideo;
 import owt.p2pandsfu.view.ThumbnailAdapter;
@@ -72,6 +82,8 @@ public class MeetFragment extends Fragment {
     private static final String ARG_SERVER_URL = "ARG_SERVER_URL";
     private static final String ARG_ROOM_ID = "ARG_ROOM_ID";
     private static final String ARG_USER_INFO = "ARG_USER_INFO";
+    private static final String ARG_SCREEN_SHARING = "ARG_SCREEN_SHARING";
+    private static final int OWT_REQUEST_CODE = 1;
     private static boolean contextHasInitialized = false;
     private static EglBase rootEglBase;
 
@@ -79,10 +91,11 @@ public class MeetFragment extends Fragment {
     private Handler handler = new Handler(Looper.getMainLooper());
     private String serverUrl;
     private String roomId;
+    private boolean screenSharing;
     private ConferenceClient conferenceClient;
     private ConferenceInfo conferenceInfo;
     private LocalStream localStream;
-    private OwtVideoCapturer capturer;
+    private OwtBaseCapturer capturer;
     private P2PHelper p2PHelper = new P2PHelper();
     private UserInfo selfInfo;
     private HashMap<String, UserInfo> userInfoMap = new HashMap<>();
@@ -90,6 +103,7 @@ public class MeetFragment extends Fragment {
     private LargeVideo largeVideo;
     private ThumbnailAdapter thumbnailAdapter;
     private MyConferenceClientObserver conferenceClientObserver;
+    private boolean publishWait = false;
 
     public MeetFragment() {
         // Required empty public constructor
@@ -136,7 +150,10 @@ public class MeetFragment extends Fragment {
             requireActivity().finish();
         });
         llToolbox.findViewById(R.id.btnCameraSwitch).setOnClickListener(v -> {
-            capturer.switchCamera(new CameraVideoCapturer.CameraSwitchHandler() {
+            if (!(capturer instanceof OwtVideoCapturer)) {
+                return;
+            }
+            ((OwtVideoCapturer) capturer).switchCamera(new CameraVideoCapturer.CameraSwitchHandler() {
                 @Override
                 public void onCameraSwitchDone(boolean isFrontCamera) {
                     Log.d(TAG, "onCameraSwitchDone() called with: isFrontCamera = [" + isFrontCamera + "]");
@@ -152,12 +169,50 @@ public class MeetFragment extends Fragment {
 
     private void initLocal() {
         boolean vga = true;
-        capturer = OwtVideoCapturer.create(vga ? 640 : 1280, vga ? 480 : 720, 30, true,
-                true);
-        localStream = new LocalStream(capturer,
-                new MediaConstraints.AudioTrackConstraints());
+        if (screenSharing) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // 安卓Q必须要有个特定type的前台服务才能使用屏幕共享，
+                getLifecycle().addObserver(new LifecycleObserver() {
+                    private Context context = requireContext();
+
+                    @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
+                    void create() {
+                        ScreenRecordingService.start(context);
+                    }
+
+                    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+                    void destroy() {
+                        ScreenRecordingService.stop(context);
+                    }
+                });
+            }
+
+            MediaProjectionManager manager =
+                    (MediaProjectionManager) requireContext().getSystemService(Context.MEDIA_PROJECTION_SERVICE);
+            startActivityForResult(manager.createScreenCaptureIntent(), OWT_REQUEST_CODE);
+        } else {
+            capturer = OwtVideoCapturer.create(vga ? 640 : 1280, vga ? 480 : 720, 30, true,
+                    true);
+            localStream = new LocalStream(capturer,
+                    new MediaConstraints.AudioTrackConstraints());
+        }
         thumbnailAdapter.initLocal(localStream, selfInfo);
         p2PHelper.setLocal(localStream);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == OWT_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            capturer = new OwtScreenCapturer(data, 1280, 720);
+            localStream = new LocalStream(capturer,
+                    new MediaConstraints.AudioTrackConstraints());
+            thumbnailAdapter.attachLocalStream(localStream);
+            p2PHelper.setLocal(localStream);
+            if (publishWait) {
+                sfuPublish();
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void initConferenceClient() {
@@ -214,6 +269,11 @@ public class MeetFragment extends Fragment {
     }
 
     private void sfuPublish() {
+        if (localStream == null) {
+            publishWait = true;
+            return;
+        }
+
         ActionCallback<Publication> callback = new ActionCallback<Publication>() {
             @Override
             public void onSuccess(final Publication result) {
@@ -468,12 +528,13 @@ public class MeetFragment extends Fragment {
         userInfoMap.clear();
     }
 
-    public static MeetFragment newInstance(String serverUrl, String roomId, UserInfo userInfo) {
+    public static MeetFragment newInstance(String serverUrl, String roomId, UserInfo userInfo, boolean screenSharing) {
         MeetFragment fragment = new MeetFragment();
         Bundle args = new Bundle();
         args.putString(ARG_SERVER_URL, serverUrl);
         args.putString(ARG_ROOM_ID, roomId);
         args.putString(ARG_USER_INFO, JSON.toJSONString(userInfo));
+        args.putBoolean(ARG_SCREEN_SHARING, screenSharing);
         fragment.setArguments(args);
         return fragment;
     }
@@ -493,6 +554,7 @@ public class MeetFragment extends Fragment {
             serverUrl = getArguments().getString(ARG_SERVER_URL);
             roomId = getArguments().getString(ARG_ROOM_ID);
             selfInfo = JSON.parseObject(getArguments().getString(ARG_USER_INFO), UserInfo.class);
+            screenSharing = getArguments().getBoolean(ARG_SCREEN_SHARING, false);
         }
     }
 

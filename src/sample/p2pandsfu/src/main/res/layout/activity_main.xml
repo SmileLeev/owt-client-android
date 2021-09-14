@@ -31,5 +31,11 @@
         android:layout_height="wrap_content"
         android:text="@string/btn_video" />
 
+    <CheckBox
+        android:id="@+id/cbScreenSharing"
+        android:layout_width="wrap_content"
+        android:text="@string/cb_screen_sharing"
+        android:layout_height="wrap_content" />
+
 
 </LinearLayout>

@@ -14,6 +14,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
 import com.alibaba.fastjson.JSON;
@@ -28,6 +29,7 @@ import owt.p2pandsfu.bean.UserInfo;
 public class MainActivity extends AppCompatActivity {
     private TextView etServerurl;
     private TextView etRoomId;
+    private CheckBox cbScreenSharing;
     private ExecutorService executor = Executors.newSingleThreadExecutor();
     private View btnVideo;
     private UserInfo userInfo;
@@ -82,7 +84,8 @@ public class MainActivity extends AppCompatActivity {
         btnVideo.setOnClickListener(v -> {
             String serverUrl = etServerurl.getText().toString();
             String roomId = etRoomId.getText().toString();
-            MeetActivity.start(this, serverUrl, roomId, userInfo);
+            boolean screenSharing = cbScreenSharing.isChecked();
+            MeetActivity.start(this, serverUrl, roomId, userInfo, screenSharing);
         });
     }
 
@@ -111,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initRoomId() {
+        cbScreenSharing = findViewById(R.id.cbScreenSharing);
         etRoomId = findViewById(R.id.etRoomId);
         String serverUrl = getSp().getString("roomId",
                 ""

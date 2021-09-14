@@ -14,7 +14,7 @@ import org.webrtc.ScreenCapturerAndroid;
 import owt.base.Stream;
 import owt.base.VideoCapturer;
 
-public class OwtScreenCapturer extends ScreenCapturerAndroid implements VideoCapturer{
+public class OwtScreenCapturer extends ScreenCapturerAndroid implements OwtBaseCapturer{
     private int width, height;
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
@@ -43,6 +43,11 @@ public class OwtScreenCapturer extends ScreenCapturerAndroid implements VideoCap
     public int getFps() {
         // ignored
         return 0;
+    }
+
+    @Override
+    public void startCapture() {
+        super.startCapture(getWidth(), getHeight(), getFps());
     }
 
     @Override
