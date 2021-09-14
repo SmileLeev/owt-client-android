@@ -43,6 +43,10 @@ public final class OwtVideoCapturer extends Camera1Capturer implements VideoCapt
         return fps;
     }
 
+    public void startCapture() {
+        super.startCapture(getWidth(), getHeight(), getFps());
+    }
+
     @Override
     public Stream.StreamSourceInfo.VideoSourceInfo getVideoSource() {
         return Stream.StreamSourceInfo.VideoSourceInfo.CAMERA;

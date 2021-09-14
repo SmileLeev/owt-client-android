@@ -121,9 +121,11 @@ public class MeetFragment extends Fragment {
         llToolbox.findViewById(R.id.btnVideoMute).setOnClickListener(v -> {
             selfInfo.setVideoMuted(!selfInfo.isVideoMuted());
             if (selfInfo.isVideoMuted()) {
+                capturer.stopCapture();
                 v.setBackgroundColor(Color.parseColor("#ff0000"));
                 localStream.disableVideo();
             } else {
+                capturer.startCapture();
                 v.setBackgroundColor(Color.parseColor("#00ff00"));
                 localStream.enableVideo();
             }
