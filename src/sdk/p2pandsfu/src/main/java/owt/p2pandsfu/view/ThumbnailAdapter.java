@@ -57,9 +57,11 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
         if (item.participantView != viewHolder.thumbnail.getParticipantView()) {
             _detachStream(stream, item.participantView);
             item.participantView = viewHolder.thumbnail.getParticipantView();
+            item.participantView.setUserInfo(item.participantId, item.userInfo);
             _attackStream(stream, item.participantView);
+        } else {
+            item.participantView.setUserInfo(item.participantId, item.userInfo);
         }
-        item.participantView.setUserInfo(item.participantId, item.userInfo);
         viewHolder.itemView.setOnClickListener(view -> {
             selectedItem = item;
             updateFullVideo();

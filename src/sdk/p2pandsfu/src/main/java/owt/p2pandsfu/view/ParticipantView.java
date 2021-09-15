@@ -22,6 +22,8 @@ import com.bumptech.glide.request.Request;
 import org.webrtc.EglBase;
 import org.webrtc.SurfaceViewRenderer;
 
+import java.util.Objects;
+
 import owt.base.LocalStream;
 import owt.base.Stream;
 import owt.p2pandsfu.BuildConfig;
@@ -40,7 +42,6 @@ public class ParticipantView extends RelativeLayout {
     private Boolean showVideo = null;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
     private boolean isFrontCamera;
-    private String participantId;
 
     public ParticipantView(Context context) {
         super(context);
@@ -174,11 +175,10 @@ public class ParticipantView extends RelativeLayout {
         updateAvatar();
     }
 
-    public void setUserInfo(@NonNull String participantId, @Nullable UserInfo userInfo) {
-        if (TextUtils.equals(this.participantId, participantId)) {
+    public void setUserInfo(@Nullable String participantId, @Nullable UserInfo userInfo) {
+        if (Objects.equals(this.userInfo, userInfo)) {
             return;
         }
-        this.participantId = participantId;
         this.userInfo = userInfo;
         runOnUiThread(() -> {
             tvDebug.setText(participantId);
