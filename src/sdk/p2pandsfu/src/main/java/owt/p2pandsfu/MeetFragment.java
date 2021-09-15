@@ -70,6 +70,7 @@ import owt.p2pandsfu.p2p.P2PHelper;
 import owt.p2pandsfu.p2p.P2PPublication;
 import owt.p2pandsfu.p2p.P2PRemoteStream;
 import owt.p2pandsfu.p2p.P2PSocket;
+import owt.p2pandsfu.utils.AudioUtils;
 import owt.p2pandsfu.utils.HttpUtils;
 import owt.p2pandsfu.utils.OwtBaseCapturer;
 import owt.p2pandsfu.utils.OwtScreenCapturer;
@@ -104,6 +105,7 @@ public class MeetFragment extends Fragment {
     private ThumbnailAdapter thumbnailAdapter;
     private MyConferenceClientObserver conferenceClientObserver;
     private boolean publishWait = false;
+    private boolean speakerphoneOn = true;
 
     public MeetFragment() {
         // Required empty public constructor
@@ -121,6 +123,16 @@ public class MeetFragment extends Fragment {
     }
 
     private void initToolbox(ViewGroup llToolbox) {
+        llToolbox.findViewById(R.id.btnAudioRoute).setOnClickListener(v -> {
+            speakerphoneOn = !speakerphoneOn;
+            if (speakerphoneOn) {
+                v.setBackgroundColor(Color.parseColor("#0000ff"));
+                AudioUtils.openSpeaker();
+            } else {
+                v.setBackgroundColor(Color.parseColor("#ff00ff"));
+                AudioUtils.closeSpeaker();
+            }
+        });
         llToolbox.findViewById(R.id.btnAudioMute).setOnClickListener(v -> {
             selfInfo.setAudioMuted(!selfInfo.isAudioMuted());
             if (selfInfo.isAudioMuted()) {
@@ -168,6 +180,7 @@ public class MeetFragment extends Fragment {
     }
 
     private void initLocal() {
+        AudioUtils.init(requireContext());
         boolean vga = true;
         if (screenSharing) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -503,6 +516,7 @@ public class MeetFragment extends Fragment {
         }
         conferenceClient.leave();
         release();
+        AudioUtils.release();
         super.onDestroy();
     }
 
