@@ -147,7 +147,7 @@ public class ParticipantView extends RelativeLayout {
         }
         Boolean oldShowVideo = showVideo;
         boolean newShowVideo = stream != null && stream.hasVideo() && (userInfo == null || !userInfo.isVideoMuted());
-        if (oldShowVideo != null && oldShowVideo == newShowVideo) {
+        if (oldShowVideo != null && oldShowVideo && newShowVideo) {
             return;
         }
         showVideo = newShowVideo;
