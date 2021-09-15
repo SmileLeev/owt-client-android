@@ -2,6 +2,8 @@
     <string name="app_name">P2PAndSfu</string>
     <string name="server_url">server url</string>
     <string name="default_room">default room</string>
-    <string name="btn_video">VIDEO</string>
+    <string name="btn_start">START</string>
     <string name="cb_screen_sharing">ScreenSharing?</string>
+    <string name="cb_audio_mute">Audio Mute</string>
+    <string name="cb_video_mute">Video Mute</string>
 </resources>

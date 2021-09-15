@@ -26,16 +26,30 @@
         android:textSize="20sp" />
 
     <Button
-        android:id="@+id/btnVideo"
+        android:id="@+id/btnStart"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/btn_video" />
+        android:text="@string/btn_start" />
+
+    <CheckBox
+        android:id="@+id/cbAudioMute"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true"
+        android:text="@string/cb_audio_mute" />
+
+    <CheckBox
+        android:id="@+id/cbVideoMute"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true"
+        android:text="@string/cb_video_mute" />
 
     <CheckBox
         android:id="@+id/cbScreenSharing"
         android:layout_width="wrap_content"
-        android:text="@string/cb_screen_sharing"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:text="@string/cb_screen_sharing" />
 
 
 </LinearLayout>

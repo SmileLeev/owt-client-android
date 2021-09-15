@@ -103,6 +103,8 @@ public class MeetFragment extends Fragment {
     private boolean speakerphoneOn = true;
     private AppRTCAudioManager audioManager;
     private View btnAudioRoute;
+    private View btnAudioMute;
+    private View btnVideoMute;
 
     public MeetFragment() {
         // Required empty public constructor
@@ -129,28 +131,16 @@ public class MeetFragment extends Fragment {
                 audioManager.setDefaultAudioDevice(AppRTCAudioManager.AudioDevice.EARPIECE);
             }
         });
-        llToolbox.findViewById(R.id.btnAudioMute).setOnClickListener(v -> {
+        btnAudioMute = llToolbox.findViewById(R.id.btnAudioMute);
+        btnAudioMute.setOnClickListener(v -> {
             selfInfo.setAudioMuted(!selfInfo.isAudioMuted());
-            if (selfInfo.isAudioMuted()) {
-                v.setBackgroundColor(Color.parseColor("#ff0000"));
-                localStream.disableAudio();
-            } else {
-                v.setBackgroundColor(Color.parseColor("#00ff00"));
-                localStream.enableAudio();
-            }
+            applyAudioMute();
             sendSelfInfo(null);
         });
-        llToolbox.findViewById(R.id.btnVideoMute).setOnClickListener(v -> {
+        btnVideoMute = llToolbox.findViewById(R.id.btnVideoMute);
+        btnVideoMute.setOnClickListener(v -> {
             selfInfo.setVideoMuted(!selfInfo.isVideoMuted());
-            if (selfInfo.isVideoMuted()) {
-                capturer.stopCapture();
-                v.setBackgroundColor(Color.parseColor("#ff0000"));
-                localStream.disableVideo();
-            } else {
-                capturer.startCapture();
-                v.setBackgroundColor(Color.parseColor("#00ff00"));
-                localStream.enableVideo();
-            }
+            applyVideoMute();
             thumbnailAdapter.update(selfInfo);
             sendSelfInfo(null);
         });
@@ -173,6 +163,28 @@ public class MeetFragment extends Fragment {
                 }
             });
         });
+    }
+
+    private void applyVideoMute() {
+        if (selfInfo.isVideoMuted()) {
+            capturer.stopCapture();
+            btnVideoMute.setBackgroundColor(Color.parseColor("#ff0000"));
+            localStream.disableVideo();
+        } else {
+            capturer.startCapture();
+            btnVideoMute.setBackgroundColor(Color.parseColor("#00ff00"));
+            localStream.enableVideo();
+        }
+    }
+
+    private void applyAudioMute() {
+        if (selfInfo.isAudioMuted()) {
+            btnAudioMute.setBackgroundColor(Color.parseColor("#ff0000"));
+            localStream.disableAudio();
+        } else {
+            btnAudioMute.setBackgroundColor(Color.parseColor("#00ff00"));
+            localStream.enableAudio();
+        }
     }
 
     private void initLocal() {
@@ -223,6 +235,12 @@ public class MeetFragment extends Fragment {
                     true);
             localStream = new LocalStream(capturer,
                     new MediaConstraints.AudioTrackConstraints());
+            if (selfInfo.isAudioMuted()) {
+                applyAudioMute();
+            }
+            if (selfInfo.isVideoMuted()) {
+                applyVideoMute();
+            }
         }
         thumbnailAdapter.initLocal(localStream, selfInfo);
         p2PHelper.setLocal(localStream);

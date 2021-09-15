@@ -31,8 +31,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView etRoomId;
     private CheckBox cbScreenSharing;
     private ExecutorService executor = Executors.newSingleThreadExecutor();
-    private View btnVideo;
+    private View btnStart;
     private UserInfo userInfo;
+    private CheckBox cbAudioMute;
+    private CheckBox cbVideoMute;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,30 +65,34 @@ public class MainActivity extends AppCompatActivity {
         userInfo.setUsername(android.os.Build.MODEL + "-" + rand);
         String avatarUrl = getSp().getString("avatarUrl", null);
         if (!TextUtils.isEmpty(avatarUrl)) {
-            btnVideo.setEnabled(true);
+            btnStart.setEnabled(true);
             userInfo.setAvatarUrl(avatarUrl);
             return;
         }
-        btnVideo.setEnabled(false);
+        btnStart.setEnabled(false);
         executor.execute(() -> {
             String json = HttpUtils.request("http://api.btstu.cn/sjtx/api.php?format=json", "GET", "", false);
             String imgurl = JSON.parseObject(json).getString("imgurl");
             getSp().edit().putString("avatarUrl", imgurl).apply();
             userInfo.setAvatarUrl(imgurl);
             runOnUiThread(() -> {
-                btnVideo.setEnabled(true);
+                btnStart.setEnabled(true);
             });
         });
     }
 
     private void initEvent() {
-        btnVideo = findViewById(R.id.btnVideo);
-        btnVideo.setOnClickListener(v -> {
+        btnStart = findViewById(R.id.btnStart);
+        btnStart.setOnClickListener(v -> {
             String serverUrl = etServerurl.getText().toString();
             String roomId = etRoomId.getText().toString();
             boolean screenSharing = cbScreenSharing.isChecked();
+            userInfo.setAudioMuted(cbAudioMute.isChecked());
+            userInfo.setVideoMuted(cbVideoMute.isChecked());
             MeetActivity.start(this, serverUrl, roomId, userInfo, screenSharing);
         });
+        cbAudioMute = findViewById(R.id.cbAudioMute);
+        cbVideoMute = findViewById(R.id.cbVideoMute);
     }
 
     private void initServerUrl() {
