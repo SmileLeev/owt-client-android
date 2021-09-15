@@ -79,10 +79,6 @@ import owt.p2pandsfu.view.ThumbnailAdapter;
 
 public class MeetFragment extends Fragment {
     private static final String TAG = "MeetFragment";
-    private static final String ARG_SERVER_URL = "ARG_SERVER_URL";
-    private static final String ARG_ROOM_ID = "ARG_ROOM_ID";
-    private static final String ARG_USER_INFO = "ARG_USER_INFO";
-    private static final String ARG_SCREEN_SHARING = "ARG_SCREEN_SHARING";
     private static final int OWT_REQUEST_CODE = 1;
     private static boolean contextHasInitialized = false;
     private static EglBase rootEglBase;
@@ -563,10 +559,10 @@ public class MeetFragment extends Fragment {
     public static MeetFragment newInstance(String serverUrl, String roomId, UserInfo userInfo, boolean screenSharing) {
         MeetFragment fragment = new MeetFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_SERVER_URL, serverUrl);
-        args.putString(ARG_ROOM_ID, roomId);
-        args.putString(ARG_USER_INFO, JSON.toJSONString(userInfo));
-        args.putBoolean(ARG_SCREEN_SHARING, screenSharing);
+        args.putString("serverUrl", serverUrl);
+        args.putString("roomId", roomId);
+        args.putString("selfInfo", JSON.toJSONString(userInfo));
+        args.putBoolean("screenSharing", screenSharing);
         fragment.setArguments(args);
         return fragment;
     }
@@ -583,10 +579,10 @@ public class MeetFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            serverUrl = getArguments().getString(ARG_SERVER_URL);
-            roomId = getArguments().getString(ARG_ROOM_ID);
-            selfInfo = JSON.parseObject(getArguments().getString(ARG_USER_INFO), UserInfo.class);
-            screenSharing = getArguments().getBoolean(ARG_SCREEN_SHARING, false);
+            serverUrl = getArguments().getString("serverUrl");
+            roomId = getArguments().getString("roomId");
+            selfInfo = JSON.parseObject(getArguments().getString("selfInfo"), UserInfo.class);
+            screenSharing = getArguments().getBoolean("screenSharing", false);
         }
     }
 
