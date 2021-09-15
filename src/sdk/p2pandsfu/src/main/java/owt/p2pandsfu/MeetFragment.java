@@ -41,7 +41,6 @@ import org.webrtc.PeerConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -63,6 +62,7 @@ import owt.conference.RemoteMixedStream;
 import owt.conference.RemoteStream;
 import owt.conference.SubscribeOptions;
 import owt.conference.Subscription;
+import owt.p2pandsfu.audio.AppRTCAudioManager;
 import owt.p2pandsfu.bean.Message;
 import owt.p2pandsfu.bean.UserInfo;
 import owt.p2pandsfu.connection.Connection;
@@ -70,7 +70,6 @@ import owt.p2pandsfu.p2p.P2PHelper;
 import owt.p2pandsfu.p2p.P2PPublication;
 import owt.p2pandsfu.p2p.P2PRemoteStream;
 import owt.p2pandsfu.p2p.P2PSocket;
-import owt.p2pandsfu.utils.AudioUtils;
 import owt.p2pandsfu.utils.HttpUtils;
 import owt.p2pandsfu.utils.OwtBaseCapturer;
 import owt.p2pandsfu.utils.OwtScreenCapturer;
@@ -106,6 +105,8 @@ public class MeetFragment extends Fragment {
     private MyConferenceClientObserver conferenceClientObserver;
     private boolean publishWait = false;
     private boolean speakerphoneOn = true;
+    private AppRTCAudioManager audioManager;
+    private View btnAudioRoute;
 
     public MeetFragment() {
         // Required empty public constructor
@@ -123,14 +124,13 @@ public class MeetFragment extends Fragment {
     }
 
     private void initToolbox(ViewGroup llToolbox) {
-        llToolbox.findViewById(R.id.btnAudioRoute).setOnClickListener(v -> {
+        btnAudioRoute = llToolbox.findViewById(R.id.btnAudioRoute);
+        btnAudioRoute.setOnClickListener(v -> {
             speakerphoneOn = !speakerphoneOn;
             if (speakerphoneOn) {
-                v.setBackgroundColor(Color.parseColor("#0000ff"));
-                AudioUtils.openSpeaker();
+                audioManager.setDefaultAudioDevice(AppRTCAudioManager.AudioDevice.SPEAKER_PHONE);
             } else {
-                v.setBackgroundColor(Color.parseColor("#ff00ff"));
-                AudioUtils.closeSpeaker();
+                audioManager.setDefaultAudioDevice(AppRTCAudioManager.AudioDevice.EARPIECE);
             }
         });
         llToolbox.findViewById(R.id.btnAudioMute).setOnClickListener(v -> {
@@ -180,13 +180,32 @@ public class MeetFragment extends Fragment {
     }
 
     private void initLocal() {
-        AudioUtils.init(requireContext());
+        getLifecycle().addObserver(new LifecycleObserver() {
+            private final Context context = requireContext();
+
+            @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
+            void create() {
+                audioManager = AppRTCAudioManager.create(context);
+                audioManager.start((selectedAudioDevice, availableAudioDevices) -> {
+                    if (selectedAudioDevice == AppRTCAudioManager.AudioDevice.SPEAKER_PHONE) {
+                        btnAudioRoute.setBackgroundColor(Color.parseColor("#0000ff"));
+                    } else {
+                        btnAudioRoute.setBackgroundColor(Color.parseColor("#ff00ff"));
+                    }
+                });
+            }
+
+            @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+            void destroy() {
+                audioManager.stop();
+            }
+        });
         boolean vga = true;
         if (screenSharing) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // 安卓Q必须要有个特定type的前台服务才能使用屏幕共享，
                 getLifecycle().addObserver(new LifecycleObserver() {
-                    private Context context = requireContext();
+                    private final Context context = requireContext();
 
                     @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
                     void create() {
@@ -516,7 +535,6 @@ public class MeetFragment extends Fragment {
         }
         conferenceClient.leave();
         release();
-        AudioUtils.release();
         super.onDestroy();
     }
 
