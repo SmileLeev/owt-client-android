@@ -99,7 +99,12 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
     }
     public void initLocal(LocalStream stream, UserInfo userInfo) {
         Log.d(TAG, "attachLocalStream() called with: stream = [" + (stream == null ? null : stream.id()) + "], userInfo = [" + userInfo + "]");
-        Item item = createItem(null, stream);
+        Item item = getLocalItemOrNull();
+        if (item == null) {
+            item = createItem(null, stream);
+        } else {
+            item.stream = stream;
+        }
         item.local = true;
         item.userInfo = userInfo;
         _attackStream(item.stream, item.participantView);
@@ -115,15 +120,10 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
     public void updateLocal(Connection connection) {
         Log.d(TAG, "attachLocalStream() called with: connection = [" + connection.id() + "]");
         Item item = getLocalItem();
+        if (item.connection != null) {
+            item.connection.stop();
+        }
         item.connection = connection;
-        updateFullVideo();
-    }
-
-    public void attachLocalStream(@NonNull LocalStream stream) {
-        Log.d(TAG, "attachLocalStream() called with: stream = [" + stream.id() + "]");
-        Item item = getLocalItem();
-        item.stream = stream;
-        _attackStream(item.stream, item.participantView);
         updateFullVideo();
     }
 
@@ -135,7 +135,8 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
         }
         Item item = getOrCreateItem(stream.origin(), stream);
         if (item.local) {
-            Log.d(TAG, "attachRemoteStream: ignore local user");
+            Log.d(TAG, "attachRemoteStream: ignore local stream");
+            item.connection = connection;
             return;
         }
         stop(item);
@@ -152,6 +153,17 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
         Item item = getItemByParticipantId(stream.origin());
         if (item != null) {
             stop(item);
+        }
+    }
+
+    public void stopPublish() {
+        for (Item item : data) {
+            if (item.local) {
+                stop(item);
+            } else if (item.connection != null && item.connection.isPublish()) {
+                item.connection.stop();
+                item.connection = null;
+            }
         }
     }
 
@@ -203,12 +215,21 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
 
     @NonNull
     private Item getLocalItem() {
+        Item item = getLocalItemOrNull();
+        if (item == null) {
+            throw new IllegalStateException("local item not found");
+        }
+        return item;
+    }
+
+    @Nullable
+    private Item getLocalItemOrNull() {
         for (Item item : data) {
             if (item.local) {
                 return item;
             }
         }
-        throw new IllegalStateException("local item not found");
+        return null;
     }
 
     private boolean notUiThread() {

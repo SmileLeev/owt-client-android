@@ -7,6 +7,7 @@ import owt.p2pandsfu.p2p.P2PPublication;
 public interface Connection {
     void stop();
     String id();
+    boolean isPublish();
 
     static Connection getInstance(Publication publication) {
         return new PublicationConnectionImpl(publication);

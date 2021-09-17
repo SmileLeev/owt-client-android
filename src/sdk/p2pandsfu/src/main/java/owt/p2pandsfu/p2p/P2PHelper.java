@@ -4,6 +4,7 @@ import static owt.base.MediaCodecs.VideoCodec.H264;
 import static owt.base.MediaCodecs.VideoCodec.H265;
 import static owt.base.MediaCodecs.VideoCodec.VP8;
 
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -72,21 +73,7 @@ public class P2PHelper {
                 if (publicationMap.containsKey(participantId)) {
                     callAttach(participantId);
                 } else {
-                    publish(participantId, new ActionCallback<P2PPublication>() {
-                        @Override
-                        public void onSuccess(P2PPublication result) {
-                            Log.d(TAG, "onSuccess() called with: result = [" + result.id() + "]");
-                        }
-
-                        @Override
-                        public void onFailure(OwtError error) {
-                            Log.d(TAG, "onFailure() called with: error = [" + error.errorMessage + "]");
-                            setEnabled(false);
-                            if (onP2PDisabledListener != null) {
-                                onP2PDisabledListener.onP2PDisabled();
-                            }
-                        }
-                    });
+                    publish(participantId, new P2PPublicationActionCallback());
                 }
             }
 
@@ -123,10 +110,10 @@ public class P2PHelper {
         p2PClient.connect(p2PSocket, conferenceInfo.self().id);
     }
 
-    public void onParticipantJoined(String participantId, ActionCallback<P2PPublication> callback) {
+    public void onParticipantJoined(String participantId) {
         updateEnabled();
         p2PClient.addAllowedRemotePeer(participantId);
-        publish(participantId, callback);
+        publish(participantId, new P2PPublicationActionCallback());
     }
 
     private void updateEnabled() {
@@ -156,6 +143,26 @@ public class P2PHelper {
             for (Map.Entry<String, ActionCallback<P2PPublication>> entry : publishCache.entrySet()) {
                 publish(entry.getKey(), entry.getValue());
             }
+            publishCache.clear();
+        }
+    }
+
+    public void stopPublish() {
+        Log.d(TAG, "stopPublish() called");
+        for (P2PPublication publication : publicationMap.values()) {
+            publication.stop();
+        }
+        publicationMap.clear();
+        localStream = null;
+    }
+
+    public void republish() {
+        Log.d(TAG, "republish() called");
+        for (Participant participant : conferenceInfo.getParticipants()) {
+            if (TextUtils.equals(participant.id, conferenceInfo.self().id)) {
+                continue;
+            }
+            publish(participant.id, new P2PPublicationActionCallback());
         }
     }
 
@@ -195,5 +202,21 @@ public class P2PHelper {
         void onAttach(String participantId, Connection connection, P2PRemoteStream remoteStream);
 
         void onDetach(String participantId, P2PRemoteStream remoteStream);
+    }
+
+    private class P2PPublicationActionCallback implements ActionCallback<P2PPublication> {
+        @Override
+        public void onSuccess(P2PPublication result) {
+            Log.d(TAG, "onSuccess() called with: result = [" + result.id() + "]");
+        }
+
+        @Override
+        public void onFailure(OwtError error) {
+            Log.d(TAG, "onFailure() called with: error = [" + error.errorMessage + "]");
+            setEnabled(false);
+            if (onP2PDisabledListener != null) {
+                onP2PDisabledListener.onP2PDisabled();
+            }
+        }
     }
 }

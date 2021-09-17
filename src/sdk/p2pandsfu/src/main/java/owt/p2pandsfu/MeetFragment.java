@@ -67,7 +67,6 @@ import owt.p2pandsfu.bean.Message;
 import owt.p2pandsfu.bean.UserInfo;
 import owt.p2pandsfu.connection.Connection;
 import owt.p2pandsfu.p2p.P2PHelper;
-import owt.p2pandsfu.p2p.P2PPublication;
 import owt.p2pandsfu.p2p.P2PRemoteStream;
 import owt.p2pandsfu.p2p.P2PSocket;
 import owt.p2pandsfu.utils.HttpUtils;
@@ -102,9 +101,11 @@ public class MeetFragment extends Fragment {
     private boolean publishWait = false;
     private boolean speakerphoneOn = true;
     private AppRTCAudioManager audioManager;
+    private View btnScreenShare;
     private View btnAudioRoute;
     private View btnAudioMute;
     private View btnVideoMute;
+    private ScreenSharingLifecycleObserver screenSharingLifecycleObserver;
 
     public MeetFragment() {
         // Required empty public constructor
@@ -122,6 +123,17 @@ public class MeetFragment extends Fragment {
     }
 
     private void initToolbox(ViewGroup llToolbox) {
+        btnScreenShare = llToolbox.findViewById(R.id.btnScreenShare);
+        btnScreenShare.setOnClickListener(v -> {
+            screenSharing = !screenSharing;
+            stopPublish();
+            initLocalStream();
+            if (p2PHelper.isEnabled()) {
+                p2PHelper.republish();
+            } else {
+                sfuPublish();
+            }
+        });
         btnAudioRoute = llToolbox.findViewById(R.id.btnAudioRoute);
         btnAudioRoute.setOnClickListener(v -> {
             speakerphoneOn = !speakerphoneOn;
@@ -208,29 +220,46 @@ public class MeetFragment extends Fragment {
                 audioManager.stop();
             }
         });
-        boolean vga = true;
+        initLocalStream();
+    }
+
+    private void stopPublish() {
+        if (thumbnailAdapter != null) {
+            thumbnailAdapter.stopPublish();
+        }
+        p2PHelper.stopPublish();
+        if (capturer != null) {
+            capturer.stopCapture();
+            capturer.dispose();
+            capturer = null;
+        }
+
+        if (localStream != null) {
+            localStream.disableVideo();
+            localStream.disableAudio();
+            localStream.dispose();
+            localStream = null;
+        }
+        if (screenSharingLifecycleObserver != null) {
+            screenSharingLifecycleObserver.destroy();
+            getLifecycle().removeObserver(screenSharingLifecycleObserver);
+            screenSharingLifecycleObserver = null;
+        }
+    }
+
+    private void initLocalStream() {
         if (screenSharing) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // 安卓Q必须要有个特定type的前台服务才能使用屏幕共享，
-                getLifecycle().addObserver(new LifecycleObserver() {
-                    private final Context context = requireContext();
-
-                    @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
-                    void create() {
-                        ScreenRecordingService.start(context);
-                    }
-
-                    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-                    void destroy() {
-                        ScreenRecordingService.stop(context);
-                    }
-                });
+                screenSharingLifecycleObserver = new ScreenSharingLifecycleObserver();
+                getLifecycle().addObserver(screenSharingLifecycleObserver);
             }
 
             MediaProjectionManager manager =
                     (MediaProjectionManager) requireContext().getSystemService(Context.MEDIA_PROJECTION_SERVICE);
             startActivityForResult(manager.createScreenCaptureIntent(), OWT_REQUEST_CODE);
         } else {
+            boolean vga = true;
             capturer = OwtVideoCapturer.create(vga ? 640 : 1280, vga ? 480 : 720, 30, true,
                     true);
             localStream = new LocalStream(capturer,
@@ -252,7 +281,7 @@ public class MeetFragment extends Fragment {
             capturer = new OwtScreenCapturer(data, 1280, 720);
             localStream = new LocalStream(capturer,
                     new MediaConstraints.AudioTrackConstraints());
-            thumbnailAdapter.attachLocalStream(localStream);
+            thumbnailAdapter.initLocal(localStream, selfInfo);
             p2PHelper.setLocal(localStream);
             if (publishWait) {
                 sfuPublish();
@@ -649,17 +678,7 @@ public class MeetFragment extends Fragment {
         @Override
         public void onParticipantJoined(Participant participant) {
             Log.d(TAG, "onParticipantJoined() called with: participant = [" + participant.id + "]");
-            p2PHelper.onParticipantJoined(participant.id, new ActionCallback<P2PPublication>() {
-                @Override
-                public void onSuccess(P2PPublication result) {
-                    Log.d(TAG, "onSuccess() called with: result = [" + result.id() + "]");
-                }
-
-                @Override
-                public void onFailure(OwtError error) {
-                    Log.d(TAG, "onFailure() called with: error = [" + error.errorMessage + "]");
-                }
-            });
+            p2PHelper.onParticipantJoined(participant.id);
             sendSelfInfo(participant.id);
             runOnUiThread(() -> {
                 onMemberJoined(participant.id, userInfoMap.get(participant.id));
@@ -694,6 +713,20 @@ public class MeetFragment extends Fragment {
             p2PHelper.onServerDisconnected();
 
             release();
+        }
+    }
+
+    private class ScreenSharingLifecycleObserver implements LifecycleObserver {
+        private final Context context = requireContext();
+
+        @OnLifecycleEvent(Lifecycle.Event.ON_CREATE)
+        void create() {
+            ScreenRecordingService.start(context);
+        }
+
+        @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+        void destroy() {
+            ScreenRecordingService.stop(context);
         }
     }
 }

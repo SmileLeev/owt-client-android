@@ -18,4 +18,9 @@ class PublicationConnectionImpl implements Connection {
     public void stop() {
         publication.stop();
     }
+
+    @Override
+    public boolean isPublish() {
+        return true;
+    }
 }

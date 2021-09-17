@@ -18,4 +18,9 @@ class SubscriptionConnectionImpl implements Connection{
     public void stop() {
         subscription.stop();
     }
+
+    @Override
+    public boolean isPublish() {
+        return false;
+    }
 }
