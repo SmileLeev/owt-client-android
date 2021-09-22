@@ -168,6 +168,7 @@ public class MeetFragment extends Fragment {
                 @Override
                 public void onCameraSwitchDone(boolean isFrontCamera) {
                     Log.d(TAG, "onCameraSwitchDone() called with: isFrontCamera = [" + isFrontCamera + "]");
+                    thumbnailAdapter.onSwitchCamera(isFrontCamera);
                 }
 
                 @Override
@@ -250,6 +251,7 @@ public class MeetFragment extends Fragment {
 
     private void initLocalStream() {
         if (screenSharing) {
+            thumbnailAdapter.onSwitchCamera(false);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // 安卓Q必须要有个特定type的前台服务才能使用屏幕共享，
                 screenSharingLifecycleObserver = new ScreenSharingLifecycleObserver();
@@ -261,10 +263,12 @@ public class MeetFragment extends Fragment {
             startActivityForResult(manager.createScreenCaptureIntent(), OWT_REQUEST_CODE);
         } else {
             boolean vga = true;
+            boolean isFrontCamera = true;
             capturer = OwtVideoCapturer.create(vga ? 640 : 1280, vga ? 480 : 720, 30, true,
-                    true);
+                    isFrontCamera);
             localStream = new LocalStream(capturer,
                     new MediaConstraints.AudioTrackConstraints());
+            thumbnailAdapter.onSwitchCamera(isFrontCamera);
             if (selfInfo.isAudioMuted()) {
                 applyAudioMute();
             }

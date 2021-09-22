@@ -62,6 +62,7 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
         } else {
             item.participantView.setUserInfo(item.participantId, item.userInfo);
         }
+        item.participantView.onSwitchCamera(isFrontCamera);
         viewHolder.itemView.setOnClickListener(view -> {
             selectedItem = item;
             updateFullVideo();
