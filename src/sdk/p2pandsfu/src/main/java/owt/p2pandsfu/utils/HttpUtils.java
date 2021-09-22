@@ -4,6 +4,8 @@
  */
 package owt.p2pandsfu.utils;
 
+import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -31,6 +33,7 @@ import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 
 public final class HttpUtils {
+    private static final String TAG = "HttpUtils";
     public static SSLContext sslContext;
     public static HostnameVerifier hostnameVerifier;
 
@@ -137,10 +140,12 @@ public final class HttpUtils {
                     response.append(lines);
                 }
                 reader.close();
+            } else {
+                Log.e(TAG, "request: response error: code " + httpURLConnection.getResponseCode());
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "request: response error:", e);
         } finally {
             if (httpURLConnection != null) {
                 httpURLConnection.disconnect();

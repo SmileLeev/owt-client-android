@@ -19,6 +19,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
+import android.support.annotation.WorkerThread;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
@@ -392,6 +393,7 @@ public class MeetFragment extends Fragment {
                 .build();
     }
 
+    @WorkerThread
     private void join() {
 
         JSONObject joinBody = new JSONObject();
@@ -406,6 +408,12 @@ public class MeetFragment extends Fragment {
         String uri = serverUrl + "/createToken/";
         String token = HttpUtils.request(uri, "POST", joinBody.toString(), true);
 
+        if (TextUtils.isEmpty(token)) {
+            runOnUiThread(() -> {
+                showError("Create token failed", "IO Error");
+            });
+            return;
+        }
         conferenceClient.join(token, new ActionCallback<ConferenceInfo>() {
             @Override
             public void onSuccess(ConferenceInfo conferenceInfo) {
@@ -440,13 +448,21 @@ public class MeetFragment extends Fragment {
                 if (disposed()) {
                     return;
                 }
-                new AlertDialog.Builder(requireContext())
-                        .setMessage("join room failed")
-                        .setPositiveButton(android.R.string.yes, (dialog, which) -> {
-                            requireActivity().finish();
-                        });
+                runOnUiThread(() -> {
+                    showError("Join room failed", e.errorMessage);
+                });
             }
         });
+    }
+
+    @UiThread
+    private void showError(String title, String message) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle(title)
+                .setMessage(message)
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                    requireActivity().finish();
+                }).show();
     }
 
     private void observeLeft(Participant participant) {
