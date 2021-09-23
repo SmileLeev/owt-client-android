@@ -150,6 +150,7 @@ public class ParticipantView extends RelativeLayout {
         }
         Boolean oldShowVideo = showVideo;
         boolean newShowVideo = stream != null && stream.videoEnabled() && (userInfo == null || !userInfo.isVideoMuted());
+        Log.d(TAG, String.format("updateAvatar: old=%s, new=%s, userInfo=%s", oldShowVideo, newShowVideo, userInfo));
         if (oldShowVideo != null && oldShowVideo && newShowVideo) {
             return;
         }
@@ -178,9 +179,7 @@ public class ParticipantView extends RelativeLayout {
     }
 
     public void setUserInfo(@Nullable String participantId, @Nullable UserInfo userInfo) {
-        if (Objects.equals(this.userInfo, userInfo)) {
-            return;
-        }
+        Log.d(TAG, "setUserInfo() called with: participantId = [" + participantId + "], userInfo = [" + userInfo + "]");
         this.userInfo = userInfo;
         runOnUiThread(() -> {
             tvDebug.setText(participantId);

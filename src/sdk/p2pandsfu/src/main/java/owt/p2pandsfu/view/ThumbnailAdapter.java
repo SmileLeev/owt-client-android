@@ -346,8 +346,11 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
         }
         Item item = data.get(index);
         item.userInfo = userInfo;
+        if (item.participantView != null) {
+            item.participantView.setUserInfo(userInfo.getParticipantId(), userInfo);
+        }
         notifyItemIfExists(index);
-        updateFullVideo();
+        fullParticipantView.setUserInfo(userInfo.getParticipantId(), userInfo);
     }
 
     @UiThread
