@@ -1,4 +1,4 @@
-package owt.sample.p2pandsfu;
+package owt.p2pandsfu;
 
 import android.content.Context;
 import android.content.Intent;
@@ -8,7 +8,6 @@ import android.support.v7.app.AppCompatActivity;
 
 import com.alibaba.fastjson.JSON;
 
-import owt.p2pandsfu.MeetFragment;
 import owt.p2pandsfu.bean.UserInfo;
 
 public class MeetActivity extends AppCompatActivity {
@@ -24,7 +23,7 @@ public class MeetActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_conference);
+        setContentView(R.layout.activity_meet);
 
         String serverUrl = getIntent().getStringExtra("serverUrl");
         String roomId = getIntent().getStringExtra("roomId");

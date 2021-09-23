@@ -9,7 +9,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Owtclientandroid">
         <activity
-            android:name=".MeetActivity"
+            android:name="owt.p2pandsfu.MeetActivity"
             android:exported="true" />
         <activity
             android:name=".MainActivity"
