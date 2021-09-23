@@ -9,6 +9,7 @@ import static owt.base.CheckCondition.RCHECK;
 import static owt.base.ContextInitialization.localContext;
 
 import org.webrtc.AudioSource;
+import org.webrtc.AudioTrack;
 import org.webrtc.MediaStream;
 import org.webrtc.SurfaceTextureHelper;
 import org.webrtc.VideoSource;
@@ -36,8 +37,14 @@ final class MediaStreamFactory {
         return instance;
     }
 
+    @SuppressWarnings("unused")
     MediaStream createMediaStream(VideoCapturer videoCapturer,
-            AudioTrackConstraints audioMediaConstraints) {
+                                  AudioTrackConstraints audioMediaConstraints) {
+        return createMediaStream(videoCapturer, audioMediaConstraints, true, true);
+    }
+    MediaStream createMediaStream(VideoCapturer videoCapturer,
+            AudioTrackConstraints audioMediaConstraints,
+            boolean audioEnabled, boolean videoEnabled) {
         RCHECK(videoCapturer != null || audioMediaConstraints != null);
 
         String label = UUID.randomUUID().toString();
@@ -49,12 +56,14 @@ final class MediaStreamFactory {
             SurfaceTextureHelper helper = SurfaceTextureHelper.create("CT", localContext);
             videoCapturer.initialize(helper, ContextInitialization.context,
                     videoSource.getCapturerObserver());
-            videoCapturer.startCapture(videoCapturer.getWidth(),
-                    videoCapturer.getHeight(),
-                    videoCapturer.getFps());
+            if (videoEnabled) {
+                videoCapturer.startCapture(videoCapturer.getWidth(),
+                        videoCapturer.getHeight(),
+                        videoCapturer.getFps());
+            }
             VideoTrack videoTrack = PCFactoryProxy.instance().createVideoTrack(label + "v0",
                     videoSource);
-            videoTrack.setEnabled(true);
+            videoTrack.setEnabled(videoEnabled);
             mediaStream.addTrack(videoTrack);
             unsharedVideoSources.put(label, videoSource);
         }
@@ -65,8 +74,9 @@ final class MediaStreamFactory {
                         audioMediaConstraints.convertToWebRTCConstraints());
             }
             audioSourceRef++;
-            mediaStream.addTrack(
-                    PCFactoryProxy.instance().createAudioTrack(label + "a0", sharedAudioSource));
+            AudioTrack audioTrack = PCFactoryProxy.instance().createAudioTrack(label + "a0", sharedAudioSource);
+            audioTrack.setEnabled(audioEnabled);
+            mediaStream.addTrack(audioTrack);
         }
 
         return mediaStream;

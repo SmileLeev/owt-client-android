@@ -267,7 +267,8 @@ public class MeetFragment extends Fragment {
             capturer = OwtVideoCapturer.create(vga ? 640 : 1280, vga ? 480 : 720, 30, true,
                     isFrontCamera);
             localStream = new LocalStream(capturer,
-                    new MediaConstraints.AudioTrackConstraints());
+                    new MediaConstraints.AudioTrackConstraints(),
+                    !selfInfo.isAudioMuted(), !selfInfo.isVideoMuted());
             thumbnailAdapter.onSwitchCamera(isFrontCamera);
             if (selfInfo.isAudioMuted()) {
                 applyAudioMute();
@@ -285,7 +286,8 @@ public class MeetFragment extends Fragment {
         if (requestCode == OWT_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             capturer = new OwtScreenCapturer(data, 1280, 720);
             localStream = new LocalStream(capturer,
-                    new MediaConstraints.AudioTrackConstraints());
+                    new MediaConstraints.AudioTrackConstraints(),
+                    !selfInfo.isAudioMuted(), !selfInfo.isVideoMuted());
             thumbnailAdapter.initLocal(localStream, selfInfo);
             p2PHelper.setLocal(localStream);
             if (publishWait) {

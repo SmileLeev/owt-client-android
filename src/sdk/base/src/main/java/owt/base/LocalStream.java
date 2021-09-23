@@ -38,12 +38,17 @@ public final class LocalStream extends Stream {
      */
     public LocalStream(VideoCapturer videoCapturer,
             MediaConstraints.AudioTrackConstraints audioMediaConstraints) {
+        this(videoCapturer, audioMediaConstraints, true, true);
+    }
+    public LocalStream(VideoCapturer videoCapturer,
+            MediaConstraints.AudioTrackConstraints audioMediaConstraints,
+            boolean audioEnabled, boolean videoEnabled) {
         //TODO: update audio source info.
         streamSourceInfo = new StreamSourceInfo(
                 videoCapturer == null ? null : videoCapturer.getVideoSource(), StreamSourceInfo
                 .AudioSourceInfo.MIC);
         mediaStream = MediaStreamFactory.instance().createMediaStream(videoCapturer,
-                audioMediaConstraints);
+                audioMediaConstraints, audioEnabled, videoEnabled);
         resolutionWidth = videoCapturer == null ? 0 : videoCapturer.getWidth();
         resolutionHeight = videoCapturer == null ? 0 : videoCapturer.getHeight();
         frameRate = videoCapturer == null ? 0 : videoCapturer.getFps();
