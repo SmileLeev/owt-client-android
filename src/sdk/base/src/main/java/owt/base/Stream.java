@@ -30,6 +30,10 @@ public abstract class Stream {
         return mediaStream != null && !mediaStream.videoTracks.isEmpty();
     }
 
+    public boolean videoEnabled() {
+        return hasVideo() && mediaStream.videoTracks.get(0).enabled();
+    }
+
     /**
      * Whether this Stream has an audio track.
      *
@@ -37,6 +41,10 @@ public abstract class Stream {
      */
     public boolean hasAudio() {
         return mediaStream != null && !mediaStream.audioTracks.isEmpty();
+    }
+
+    public boolean audioEnabled() {
+        return hasAudio() && mediaStream.audioTracks.get(0).enabled();
     }
 
     /**

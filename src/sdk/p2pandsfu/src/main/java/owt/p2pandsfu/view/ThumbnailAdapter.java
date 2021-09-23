@@ -1,6 +1,7 @@
 package owt.p2pandsfu.view;
 
 import android.annotation.SuppressLint;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
@@ -67,6 +68,31 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
             selectedItem = item;
             updateFullVideo();
         });
+        if (item.local) {
+            viewHolder.btnAudioMute.setVisibility(View.GONE);
+        } else {
+            viewHolder.btnAudioMute.setVisibility(View.VISIBLE);
+            boolean muted = item.stream == null || !item.stream.audioEnabled();
+            if (muted) {
+                viewHolder.btnAudioMute.setBackgroundColor(Color.parseColor("#ff0000"));
+            } else {
+                viewHolder.btnAudioMute.setBackgroundColor(Color.parseColor("#00ff00"));
+            }
+            viewHolder.btnAudioMute.setOnClickListener(v -> {
+                if (item.stream == null) {
+                    return;
+                }
+                boolean muted0 = !item.stream.audioEnabled();
+                muted0 = !muted0;
+                if (muted0) {
+                    item.stream.disableAudio();
+                    v.setBackgroundColor(Color.parseColor("#ff0000"));
+                } else {
+                    item.stream.enableAudio();
+                    v.setBackgroundColor(Color.parseColor("#00ff00"));
+                }
+            });
+        }
     }
 
     @Override
@@ -389,6 +415,7 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final Thumbnail thumbnail = itemView.findViewById(R.id.thumbnail);
+        private final View btnAudioMute = itemView.findViewById(R.id.btnAudioMute);
 
         public ViewHolder(View itemView, EglBase.Context eglBaseContext) {
             super(itemView);
