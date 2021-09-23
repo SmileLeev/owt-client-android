@@ -8,6 +8,7 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
+import android.support.annotation.UiThread;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -140,14 +141,15 @@ public class ParticipantView extends RelativeLayout {
         }
     }
 
-    private void updateAvatar() {
+    @UiThread
+    public void updateAvatar() {
         Log.d(TAG, "updateAvatar() called: stream is null " + (stream == null));
         if (notUiThread()) {
             runOnUiThread(this::updateAvatar);
             return;
         }
         Boolean oldShowVideo = showVideo;
-        boolean newShowVideo = stream != null && stream.hasVideo() && (userInfo == null || !userInfo.isVideoMuted());
+        boolean newShowVideo = stream != null && stream.videoEnabled() && (userInfo == null || !userInfo.isVideoMuted());
         if (oldShowVideo != null && oldShowVideo && newShowVideo) {
             return;
         }

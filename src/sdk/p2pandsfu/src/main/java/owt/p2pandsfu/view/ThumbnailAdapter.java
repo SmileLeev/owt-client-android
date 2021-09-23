@@ -68,17 +68,22 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
             selectedItem = item;
             updateFullVideo();
         });
+        initAudioButton(item, viewHolder.btnAudioMute);
+        initVideoButton(item, viewHolder.btnVideoMute);
+    }
+
+    private void initAudioButton(Item item, View button) {
         if (item.local) {
-            viewHolder.btnAudioMute.setVisibility(View.GONE);
+            button.setVisibility(View.GONE);
         } else {
-            viewHolder.btnAudioMute.setVisibility(View.VISIBLE);
+            button.setVisibility(View.VISIBLE);
             boolean muted = item.stream == null || !item.stream.audioEnabled();
             if (muted) {
-                viewHolder.btnAudioMute.setBackgroundColor(Color.parseColor("#ff0000"));
+                button.setBackgroundColor(Color.parseColor("#ff0000"));
             } else {
-                viewHolder.btnAudioMute.setBackgroundColor(Color.parseColor("#00ff00"));
+                button.setBackgroundColor(Color.parseColor("#00ff00"));
             }
-            viewHolder.btnAudioMute.setOnClickListener(v -> {
+            button.setOnClickListener(v -> {
                 if (item.stream == null) {
                     return;
                 }
@@ -91,6 +96,35 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
                     item.stream.enableAudio();
                     v.setBackgroundColor(Color.parseColor("#00ff00"));
                 }
+            });
+        }
+    }
+
+    private void initVideoButton(Item item, View button) {
+        if (item.local) {
+            button.setVisibility(View.GONE);
+        } else {
+            button.setVisibility(View.VISIBLE);
+            boolean muted = item.stream == null || !item.stream.videoEnabled();
+            if (muted) {
+                button.setBackgroundColor(Color.parseColor("#ff0000"));
+            } else {
+                button.setBackgroundColor(Color.parseColor("#00ff00"));
+            }
+            button.setOnClickListener(v -> {
+                if (item.stream == null) {
+                    return;
+                }
+                boolean muted0 = !item.stream.videoEnabled();
+                muted0 = !muted0;
+                if (muted0) {
+                    item.stream.disableVideo();
+                    v.setBackgroundColor(Color.parseColor("#ff0000"));
+                } else {
+                    item.stream.enableVideo();
+                    v.setBackgroundColor(Color.parseColor("#00ff00"));
+                }
+                item.participantView.updateAvatar();
             });
         }
     }
@@ -416,6 +450,7 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final Thumbnail thumbnail = itemView.findViewById(R.id.thumbnail);
         private final View btnAudioMute = itemView.findViewById(R.id.btnAudioMute);
+        private final View btnVideoMute = itemView.findViewById(R.id.btnVideoMute);
 
         public ViewHolder(View itemView, EglBase.Context eglBaseContext) {
             super(itemView);
