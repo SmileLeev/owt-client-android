@@ -63,6 +63,10 @@ public class P2PHelper {
                         if (attachListener != null) {
                             attachListener.onDetach(participantId, remoteStream);
                         }
+                        setEnabled(false);
+                        if (onP2PDisabledListener != null) {
+                            onP2PDisabledListener.onP2PDisabled();
+                        }
                     }
 
                     @Override
