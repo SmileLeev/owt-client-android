@@ -136,7 +136,11 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
 
     @Override
     public long getItemId(int position) {
-        return position;
+        Item item = data.get(position);
+        if (item == null || item.participantId == null) {
+            return position;
+        }
+        return item.participantId.hashCode();
     }
 
     private void _attackStream(Stream stream, ParticipantView renderer) {
