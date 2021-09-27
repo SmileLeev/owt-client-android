@@ -8,6 +8,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import org.json.JSONArray;
+import org.webrtc.PeerConnection;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,7 +40,7 @@ public class P2PHelper {
         p2PClient.onServerDisconnected();
     }
 
-    public void initClient(P2PAttachListener attachListener) {
+    public void initClient(PeerConnection.RTCConfiguration rtcConfiguration, P2PAttachListener attachListener) {
         this.attachListener = attachListener;
         VideoEncodingParameters h264 = new VideoEncodingParameters(H264);
         VideoEncodingParameters h265 = new VideoEncodingParameters(H265);
@@ -48,6 +49,7 @@ public class P2PHelper {
                 .addVideoParameters(h264)
                 .addVideoParameters(vp8)
                 .addVideoParameters(h265)
+                .setRTCConfiguration(rtcConfiguration)
                 .build();
         p2PClient = new P2PClient(configuration, new P2PSocketSignalingChannel());
         p2PClient.addObserver(new P2PClient.P2PClientObserver() {

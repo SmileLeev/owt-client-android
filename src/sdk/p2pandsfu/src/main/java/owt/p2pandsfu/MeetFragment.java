@@ -299,11 +299,21 @@ public class MeetFragment extends Fragment {
 
     private void initConferenceClient() {
 
-        PeerConnection.IceServer iceServer = PeerConnection.IceServer
-                .builder("stun:stun.l.google.com:19302")
-                .createIceServer();
         List<PeerConnection.IceServer> iceServers = new ArrayList<>();
-        iceServers.add(iceServer);
+        iceServers.add(PeerConnection.IceServer
+                .builder("stun:stun.l.google.com:19302")
+                .setTlsCertPolicy(PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_INSECURE_NO_CHECK)
+                .createIceServer());
+        iceServers.add(PeerConnection.IceServer
+                .builder("stun:192.168.0.99:3478")
+                .setTlsCertPolicy(PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_INSECURE_NO_CHECK)
+                .createIceServer());
+        iceServers.add(PeerConnection.IceServer
+                .builder("turn:192.168.0.99:3478")
+                .setUsername("uuuser")
+                .setPassword("pppass")
+                .setTlsCertPolicy(PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_INSECURE_NO_CHECK)
+                .createIceServer());
         PeerConnection.RTCConfiguration rtcConfiguration = new PeerConnection.RTCConfiguration(
                 iceServers);
         HttpUtils.setUpINSECURESSLContext();
@@ -317,7 +327,7 @@ public class MeetFragment extends Fragment {
         conferenceClient = new ConferenceClient(configuration);
         conferenceClientObserver = new MyConferenceClientObserver();
         conferenceClient.addObserver(conferenceClientObserver);
-        p2PHelper.initClient(new P2PHelper.P2PAttachListener() {
+        p2PHelper.initClient(rtcConfiguration, new P2PHelper.P2PAttachListener() {
             @Override
             public void onAttach(String participantId, Connection connection, P2PRemoteStream remoteStream) {
                 if (disposed()) {

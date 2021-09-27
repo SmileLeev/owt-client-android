@@ -159,7 +159,7 @@ public abstract class PeerConnectionChannel
                 return;
             }
             if (peerConnection.signalingState() == PeerConnection.SignalingState.STABLE) {
-                Log.d(LOG_TAG, "add ice candidate");
+                Log.d(LOG_TAG, "add ice candidate: " + iceCandidate);
                 peerConnection.addIceCandidate(iceCandidate);
             } else {
                 synchronized (remoteIceLock) {
@@ -181,7 +181,7 @@ public abstract class PeerConnectionChannel
                         return;
                     }
                     IceCandidate candidate = iterator.next();
-                    Log.d(LOG_TAG, "add ice candidate");
+                    Log.d(LOG_TAG, "add ice candidate: " + candidate);
                     peerConnection.addIceCandidate(candidate);
                     iterator.remove();
                 }

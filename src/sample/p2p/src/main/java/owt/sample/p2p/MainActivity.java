@@ -27,9 +27,12 @@ import android.view.WindowManager;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.webrtc.EglBase;
+import org.webrtc.PeerConnection;
 import org.webrtc.RTCStatsReport;
 import org.webrtc.SurfaceViewRenderer;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
@@ -135,10 +138,28 @@ public class MainActivity extends AppCompatActivity implements LoginFragment.Log
         VideoEncodingParameters h264 = new VideoEncodingParameters(H264);
         VideoEncodingParameters h265 = new VideoEncodingParameters(H265);
         VideoEncodingParameters vp8 = new VideoEncodingParameters(VP8);
+        List<PeerConnection.IceServer> iceServers = new ArrayList<>();
+        iceServers.add(PeerConnection.IceServer
+                .builder("stun:stun.l.google.com:19302")
+                .setTlsCertPolicy(PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_INSECURE_NO_CHECK)
+                .createIceServer());
+        iceServers.add(PeerConnection.IceServer
+                .builder("stun:192.168.0.99:3478")
+                .setTlsCertPolicy(PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_INSECURE_NO_CHECK)
+                .createIceServer());
+        iceServers.add(PeerConnection.IceServer
+                .builder("turn:192.168.0.99:3478")
+                .setUsername("uuuser")
+                .setPassword("pppass")
+                .setTlsCertPolicy(PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_INSECURE_NO_CHECK)
+                .createIceServer());
+        PeerConnection.RTCConfiguration rtcConfiguration = new PeerConnection.RTCConfiguration(
+                iceServers);
         P2PClientConfiguration configuration = P2PClientConfiguration.builder()
                 .addVideoParameters(h264)
                 .addVideoParameters(vp8)
                 .addVideoParameters(h265)
+                .setRTCConfiguration(rtcConfiguration)
                 .build();
 
         p2PClient = new P2PClient(configuration, new SocketSignalingChannel());

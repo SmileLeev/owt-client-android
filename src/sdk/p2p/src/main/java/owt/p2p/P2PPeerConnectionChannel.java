@@ -302,7 +302,7 @@ final class P2PPeerConnectionChannel extends PeerConnectionChannel {
     @Override
     public void onIceCandidate(final IceCandidate iceCandidate) {
         callbackExecutor.execute(() -> {
-            Log.d(LOG_TAG, "onIceCandidate");
+            Log.d(LOG_TAG, "onIceCandidate: " + iceCandidate);
             observer.onIceCandidate(key, iceCandidate);
         });
     }
