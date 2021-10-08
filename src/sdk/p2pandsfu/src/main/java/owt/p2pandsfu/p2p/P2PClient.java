@@ -773,6 +773,9 @@ public final class P2PClient implements PeerConnectionChannel.PeerConnectionChan
     }
 
     public void onServerDisconnected() {
+        if (serverConnectionStatus == ServerConnectionStatus.DISCONNECTED) {
+            return;
+        }
         changeConnectionStatus(ServerConnectionStatus.DISCONNECTED);
         closeInternal();
     }
