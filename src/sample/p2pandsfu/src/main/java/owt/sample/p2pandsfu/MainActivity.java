@@ -89,7 +89,15 @@ public class MainActivity extends AppCompatActivity {
             MeetActivity.start(this, serverUrl, roomId, userInfo, screenSharing);
         });
         cbAudioMute = findViewById(R.id.cbAudioMute);
+        cbAudioMute.setChecked(getSp().getBoolean("AudioMute", false));
+        cbAudioMute.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            getSp().edit().putBoolean("AudioMute", isChecked).apply();
+        });
         cbVideoMute = findViewById(R.id.cbVideoMute);
+        cbVideoMute.setChecked(getSp().getBoolean("VideoMute", false));
+        cbVideoMute.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            getSp().edit().putBoolean("VideoMute", isChecked).apply();
+        });
     }
 
     private void initServerUrl() {

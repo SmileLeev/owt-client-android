@@ -35,14 +35,12 @@
         android:id="@+id/cbAudioMute"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:checked="true"
         android:text="@string/cb_audio_mute" />
 
     <CheckBox
         android:id="@+id/cbVideoMute"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:checked="true"
         android:text="@string/cb_video_mute" />
 
     <CheckBox
