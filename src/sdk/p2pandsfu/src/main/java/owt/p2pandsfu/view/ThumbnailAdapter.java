@@ -19,6 +19,7 @@ import org.webrtc.EglBase;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import owt.base.LocalStream;
 import owt.base.RemoteStream;
@@ -354,7 +355,9 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
             item.participantView.setUserInfo(userInfo.getParticipantId(), userInfo);
         }
         notifyItemIfExists(index);
-        fullParticipantView.setUserInfo(userInfo.getParticipantId(), userInfo);
+        if (Objects.equals(fullParticipantView.getUserInfo(), userInfo)) {
+            fullParticipantView.setUserInfo(userInfo.getParticipantId(), userInfo);
+        }
     }
 
     @UiThread

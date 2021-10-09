@@ -187,6 +187,11 @@ public class ParticipantView extends RelativeLayout {
         });
     }
 
+    @Nullable
+    public UserInfo getUserInfo() {
+        return userInfo;
+    }
+
     private void showAvatar() {
         ivAvatar.setTag(R.id.avatar_tag, userInfo);
         if (userInfo == null || TextUtils.isEmpty(userInfo.getAvatarUrl())) {
