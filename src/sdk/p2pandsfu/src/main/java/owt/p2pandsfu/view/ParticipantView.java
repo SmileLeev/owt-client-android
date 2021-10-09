@@ -214,7 +214,9 @@ public class ParticipantView extends RelativeLayout {
 
     public void onSwitchCamera(boolean isFrontCamera) {
         this.isFrontCamera = isFrontCamera;
-        renderer.setMirror(stream instanceof LocalStream && isFrontCamera);
+        if (renderer != null) {
+            renderer.setMirror(stream instanceof LocalStream && isFrontCamera);
+        }
     }
 
     public void release() {
