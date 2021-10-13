@@ -3,73 +3,45 @@
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/llToolbox"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="60dp"
     android:gravity="center"
     android:orientation="horizontal"
     tools:ignore="HardcodedText"
     tools:showIn="@layout/fragment_meet">
 
-    <TextView
+    <ImageView
         android:id="@+id/btnAudioMute"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="#0f0"
-        android:padding="10dp"
-        android:text=" A "
-        android:textColor="#fff"
-        android:textSize="30sp" />
+        android:src="@drawable/microphone"
+        style="@style/toolbox_button" />
 
-    <TextView
+    <ImageView
         android:id="@+id/btnAudioRoute"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="#00f"
-        android:padding="10dp"
-        android:text=" R "
-        android:textColor="#fff"
-        android:textSize="30sp" />
+        android:src="@drawable/phone_talk"
+        style="@style/toolbox_button"/>
 
-    <TextView
+    <ImageView
         android:id="@+id/btnHangUp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="#f00"
-        android:padding="10dp"
-        android:text=" H "
-        android:textColor="#fff"
-        android:textSize="30sp" />
+        android:src="@drawable/hangup"
+        android:backgroundTint="#FF4418"
+        style="@style/toolbox_button"/>
 
-    <TextView
+    <ImageView
         android:id="@+id/btnScreenShare"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="#ff0"
-        android:padding="10dp"
-        android:text=" S "
-        android:textColor="#fff"
-        android:textSize="30sp" />
+        android:src="@drawable/share_desktop"
+        style="@style/toolbox_button"/>
 
-    <TextView
+    <ImageView
         android:id="@+id/btnVideoMute"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="#0f0"
-        android:padding="10dp"
-        android:text=" V "
-        android:textColor="#fff"
-        android:textSize="30sp" />
+        android:src="@drawable/camera"
+        style="@style/toolbox_button"/>
 
-    <TextView
+    <ImageView
         android:id="@+id/btnCameraSwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="#0ff"
-        android:padding="10dp"
-        android:text=" S "
-        android:textColor="#fff"
-        android:textSize="30sp" />
+        android:src="@drawable/switch_camera"
+        style="@style/toolbox_button"/>
 
 </LinearLayout>
 

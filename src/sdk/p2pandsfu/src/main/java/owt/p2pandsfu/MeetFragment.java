@@ -28,6 +28,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
@@ -103,9 +104,9 @@ public class MeetFragment extends Fragment {
     private boolean speakerphoneOn = true;
     private AppRTCAudioManager audioManager;
     private View btnScreenShare;
-    private View btnAudioRoute;
-    private View btnAudioMute;
-    private View btnVideoMute;
+    private ImageView btnAudioRoute;
+    private ImageView btnAudioMute;
+    private ImageView btnVideoMute;
     private ScreenSharingLifecycleObserver screenSharingLifecycleObserver;
 
     public MeetFragment() {
@@ -143,6 +144,7 @@ public class MeetFragment extends Fragment {
             } else {
                 audioManager.setDefaultAudioDevice(AppRTCAudioManager.AudioDevice.EARPIECE);
             }
+            applyAudioRoute();
         });
         btnAudioMute = llToolbox.findViewById(R.id.btnAudioMute);
         btnAudioMute.setOnClickListener(v -> {
@@ -182,22 +184,36 @@ public class MeetFragment extends Fragment {
     private void applyVideoMute() {
         if (selfInfo.isVideoMuted()) {
             capturer.stopCapture();
-            btnVideoMute.setBackgroundColor(Color.parseColor("#ff0000"));
+            btnVideoMute.setSelected(true);
+            btnVideoMute.setImageResource(R.drawable.camera_disabled);
             localStream.disableVideo();
         } else {
             capturer.startCapture();
-            btnVideoMute.setBackgroundColor(Color.parseColor("#00ff00"));
+            btnVideoMute.setSelected(false);
+            btnVideoMute.setImageResource(R.drawable.camera);
             localStream.enableVideo();
         }
     }
 
     private void applyAudioMute() {
         if (selfInfo.isAudioMuted()) {
-            btnAudioMute.setBackgroundColor(Color.parseColor("#ff0000"));
+            btnAudioMute.setSelected(true);
+            btnAudioMute.setImageResource(R.drawable.mic_disabled);
             localStream.disableAudio();
         } else {
-            btnAudioMute.setBackgroundColor(Color.parseColor("#00ff00"));
+            btnAudioMute.setSelected(false);
+            btnAudioMute.setImageResource(R.drawable.microphone);
             localStream.enableAudio();
+        }
+    }
+
+    private void applyAudioRoute() {
+        if (speakerphoneOn) {
+            btnAudioRoute.setSelected(true);
+            btnAudioRoute.setImageResource(R.drawable.volume);
+        } else {
+            btnAudioRoute.setSelected(false);
+            btnAudioRoute.setImageResource(R.drawable.phone_talk);
         }
     }
 
@@ -209,11 +225,8 @@ public class MeetFragment extends Fragment {
             void create() {
                 audioManager = AppRTCAudioManager.create(context);
                 audioManager.start((selectedAudioDevice, availableAudioDevices) -> {
-                    if (selectedAudioDevice == AppRTCAudioManager.AudioDevice.SPEAKER_PHONE) {
-                        btnAudioRoute.setBackgroundColor(Color.parseColor("#0000ff"));
-                    } else {
-                        btnAudioRoute.setBackgroundColor(Color.parseColor("#ff00ff"));
-                    }
+                    speakerphoneOn = selectedAudioDevice == AppRTCAudioManager.AudioDevice.SPEAKER_PHONE;
+                    applyAudioRoute();
                 });
             }
 

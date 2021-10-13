@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="toolbox_button">
+        <item name="android:layout_width">60dp</item>
+        <item name="android:layout_height">60dp</item>
+        <item name="android:background">@drawable/toolbox_icon_bg_checkable</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:tint">@color/toolbox_icon_front</item>
+    </style>
+</resources>

@@ -1,9 +1,9 @@
 <resources>
-    <string name="app_name">P2PAndSfu</string>
-    <string name="server_url">server url</string>
-    <string name="default_room">default room</string>
-    <string name="btn_start">START</string>
-    <string name="cb_screen_sharing">ScreenSharing?</string>
-    <string name="cb_audio_mute">Audio Mute</string>
-    <string name="cb_video_mute">Video Mute</string>
+    <string name="app_name">OWT会议Demo</string>
+    <string name="server_url">服务器地址</string>
+    <string name="default_room">默认房间</string>
+    <string name="btn_start">开始会议</string>
+    <string name="cb_screen_sharing">屏幕共享</string>
+    <string name="cb_audio_mute">关闭音频</string>
+    <string name="cb_video_mute">关闭视频</string>
 </resources>
