@@ -209,10 +209,8 @@ public class MeetFragment extends Fragment {
 
     private void applyAudioRoute() {
         if (speakerphoneOn) {
-            btnAudioRoute.setSelected(true);
             btnAudioRoute.setImageResource(R.drawable.volume);
         } else {
-            btnAudioRoute.setSelected(false);
             btnAudioRoute.setImageResource(R.drawable.phone_talk);
         }
     }
