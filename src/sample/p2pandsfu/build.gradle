@@ -17,10 +17,18 @@ android {
     }
 
     buildTypes {
+        debug {
+            debuggable true     // 必须设置为 true
+            jniDebuggable true  // 必须设置为 true
+            minifyEnabled false // 必须设置为 false
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+    packagingOptions {
+        doNotStrip "**/*.so"
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
