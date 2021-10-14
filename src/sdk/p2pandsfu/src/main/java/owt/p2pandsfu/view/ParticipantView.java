@@ -43,6 +43,7 @@ public class ParticipantView extends RelativeLayout {
     private Boolean showVideo = null;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
     private boolean isFrontCamera;
+    private OnStreamUpdateListener onStreamUpdateListener;
 
     public ParticipantView(Context context) {
         super(context);
@@ -165,6 +166,10 @@ public class ParticipantView extends RelativeLayout {
             }
             renderer.setZOrderMediaOverlay(false);
         }
+        if (onStreamUpdateListener != null) {
+            onStreamUpdateListener.onStreamUpdate(stream != null && stream.audioEnabled(),
+                    stream != null && stream.videoEnabled());
+        }
     }
 
     private void _detachStream() {
@@ -229,5 +234,13 @@ public class ParticipantView extends RelativeLayout {
         renderer.getHolder().getSurface().release();
         renderer.release();
         renderer = null;
+    }
+
+    public void setOnStreamUpdateListener(OnStreamUpdateListener onStreamUpdateListener) {
+        this.onStreamUpdateListener = onStreamUpdateListener;
+    }
+
+    public interface OnStreamUpdateListener {
+        void onStreamUpdate(boolean audioEnabled, boolean videoEnabled);
     }
 }

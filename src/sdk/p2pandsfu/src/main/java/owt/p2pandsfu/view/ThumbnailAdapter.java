@@ -71,6 +71,18 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
         });
         initAudioButton(item, viewHolder.btnAudioMute);
         initVideoButton(item, viewHolder.btnVideoMute);
+        item.participantView.setOnStreamUpdateListener((audioEnabled, videoEnabled) -> {
+            if (!audioEnabled) {
+                viewHolder.btnAudioMute.setBackgroundColor(Color.parseColor("#ff0000"));
+            } else {
+                viewHolder.btnAudioMute.setBackgroundColor(Color.parseColor("#00ff00"));
+            }
+            if (!videoEnabled) {
+                viewHolder.btnVideoMute.setBackgroundColor(Color.parseColor("#ff0000"));
+            } else {
+                viewHolder.btnVideoMute.setBackgroundColor(Color.parseColor("#00ff00"));
+            }
+        });
     }
 
     private void initAudioButton(Item item, View button) {
