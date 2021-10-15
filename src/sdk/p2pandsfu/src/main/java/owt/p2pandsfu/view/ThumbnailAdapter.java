@@ -138,6 +138,9 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
                     v.setBackgroundColor(Color.parseColor("#00ff00"));
                 }
                 item.participantView.updateAvatar();
+                if (Objects.equals(fullParticipantView.getUserInfo(), item.userInfo)) {
+                    fullParticipantView.setUserInfo(item.userInfo.getParticipantId(), item.userInfo);
+                }
             });
         }
     }
