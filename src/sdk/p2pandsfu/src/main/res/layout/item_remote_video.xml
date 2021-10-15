@@ -10,28 +10,18 @@
         android:layout_height="match_parent" />
 
 
-    <TextView
+    <ImageView
         android:id="@+id/btnVideoMute"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
+        style="@style/toolbox_button"
         android:layout_above="@+id/btnAudioMute"
-        android:background="#0f0"
-        android:padding="10dp"
-        android:text=" V "
-        android:textColor="#fff"
-        android:textSize="30sp" />
+        android:layout_alignParentEnd="true"
+        android:src="@drawable/camera" />
 
-    <TextView
+    <ImageView
         android:id="@+id/btnAudioMute"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/toolbox_button"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:background="#0f0"
-        android:padding="10dp"
-        android:text=" A "
-        android:textColor="#fff"
-        android:textSize="30sp" />
+        android:src="@drawable/microphone" />
 
 </RelativeLayout>

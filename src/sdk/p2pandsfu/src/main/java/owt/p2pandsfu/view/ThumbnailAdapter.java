@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import org.webrtc.EglBase;
 
@@ -72,30 +73,38 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
         initAudioButton(item, viewHolder.btnAudioMute);
         initVideoButton(item, viewHolder.btnVideoMute);
         item.participantView.setOnStreamUpdateListener((audioEnabled, videoEnabled) -> {
-            if (!audioEnabled) {
-                viewHolder.btnAudioMute.setBackgroundColor(Color.parseColor("#ff0000"));
-            } else {
-                viewHolder.btnAudioMute.setBackgroundColor(Color.parseColor("#00ff00"));
-            }
-            if (!videoEnabled) {
-                viewHolder.btnVideoMute.setBackgroundColor(Color.parseColor("#ff0000"));
-            } else {
-                viewHolder.btnVideoMute.setBackgroundColor(Color.parseColor("#00ff00"));
-            }
+            applyAudioMute(viewHolder.btnAudioMute, !audioEnabled);
+            applyVideoMute(viewHolder.btnVideoMute, !videoEnabled);
         });
     }
 
-    private void initAudioButton(Item item, View button) {
+    private void applyVideoMute(ImageView view, boolean mute) {
+        if (mute) {
+            view.setSelected(true);
+            view.setImageResource(R.drawable.camera_disabled);
+        } else {
+            view.setSelected(false);
+            view.setImageResource(R.drawable.camera);
+        }
+    }
+
+    private void applyAudioMute(ImageView view, boolean mute) {
+        if (mute) {
+            view.setSelected(true);
+            view.setImageResource(R.drawable.mic_disabled);
+        } else {
+            view.setSelected(false);
+            view.setImageResource(R.drawable.microphone);
+        }
+    }
+
+    private void initAudioButton(Item item, ImageView button) {
         if (item.local) {
             button.setVisibility(View.GONE);
         } else {
             button.setVisibility(View.VISIBLE);
             boolean muted = item.stream == null || !item.stream.audioEnabled();
-            if (muted) {
-                button.setBackgroundColor(Color.parseColor("#ff0000"));
-            } else {
-                button.setBackgroundColor(Color.parseColor("#00ff00"));
-            }
+            applyAudioMute(button, muted);
             button.setOnClickListener(v -> {
                 if (item.stream == null) {
                     return;
@@ -104,26 +113,21 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
                 muted0 = !muted0;
                 if (muted0) {
                     item.stream.disableAudio();
-                    v.setBackgroundColor(Color.parseColor("#ff0000"));
                 } else {
                     item.stream.enableAudio();
-                    v.setBackgroundColor(Color.parseColor("#00ff00"));
                 }
+                applyAudioMute((ImageView) v, muted0);
             });
         }
     }
 
-    private void initVideoButton(Item item, View button) {
+    private void initVideoButton(Item item, ImageView button) {
         if (item.local) {
             button.setVisibility(View.GONE);
         } else {
             button.setVisibility(View.VISIBLE);
             boolean muted = item.stream == null || !item.stream.videoEnabled();
-            if (muted) {
-                button.setBackgroundColor(Color.parseColor("#ff0000"));
-            } else {
-                button.setBackgroundColor(Color.parseColor("#00ff00"));
-            }
+            applyVideoMute(button, muted);
             button.setOnClickListener(v -> {
                 if (item.stream == null) {
                     return;
@@ -132,11 +136,10 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
                 muted0 = !muted0;
                 if (muted0) {
                     item.stream.disableVideo();
-                    v.setBackgroundColor(Color.parseColor("#ff0000"));
                 } else {
                     item.stream.enableVideo();
-                    v.setBackgroundColor(Color.parseColor("#00ff00"));
                 }
+                applyVideoMute((ImageView) v, muted0);
                 item.participantView.updateAvatar();
                 if (Objects.equals(fullParticipantView.getUserInfo(), item.userInfo)) {
                     fullParticipantView.setUserInfo(item.userInfo.getParticipantId(), item.userInfo);
@@ -474,8 +477,8 @@ public class ThumbnailAdapter extends RecyclerView.Adapter<ThumbnailAdapter.View
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final Thumbnail thumbnail = itemView.findViewById(R.id.thumbnail);
-        private final View btnAudioMute = itemView.findViewById(R.id.btnAudioMute);
-        private final View btnVideoMute = itemView.findViewById(R.id.btnVideoMute);
+        private final ImageView btnAudioMute = itemView.findViewById(R.id.btnAudioMute);
+        private final ImageView btnVideoMute = itemView.findViewById(R.id.btnVideoMute);
 
         public ViewHolder(View itemView, EglBase.Context eglBaseContext) {
             super(itemView);
