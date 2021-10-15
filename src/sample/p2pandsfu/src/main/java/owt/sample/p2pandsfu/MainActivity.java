@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private UserInfo userInfo;
     private CheckBox cbAudioMute;
     private CheckBox cbVideoMute;
+    private CheckBox cbP2P;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,9 +85,10 @@ public class MainActivity extends AppCompatActivity {
             String serverUrl = etServerurl.getText().toString();
             String roomId = etRoomId.getText().toString();
             boolean screenSharing = cbScreenSharing.isChecked();
+            boolean p2p = cbP2P.isChecked();
             userInfo.setAudioMuted(cbAudioMute.isChecked());
             userInfo.setVideoMuted(cbVideoMute.isChecked());
-            MeetActivity.start(this, serverUrl, roomId, userInfo, screenSharing);
+            MeetActivity.start(this, serverUrl, roomId, userInfo, screenSharing, p2p);
         });
         cbAudioMute = findViewById(R.id.cbAudioMute);
         cbAudioMute.setChecked(getSp().getBoolean("AudioMute", false));
@@ -97,6 +99,11 @@ public class MainActivity extends AppCompatActivity {
         cbVideoMute.setChecked(getSp().getBoolean("VideoMute", false));
         cbVideoMute.setOnCheckedChangeListener((buttonView, isChecked) -> {
             getSp().edit().putBoolean("VideoMute", isChecked).apply();
+        });
+        cbP2P = findViewById(R.id.cbP2P);
+        cbP2P.setChecked(getSp().getBoolean("cbP2P", false));
+        cbP2P.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            getSp().edit().putBoolean("cbP2P", isChecked).apply();
         });
     }
 

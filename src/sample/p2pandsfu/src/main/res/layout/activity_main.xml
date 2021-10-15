@@ -49,5 +49,11 @@
         android:layout_height="wrap_content"
         android:text="@string/cb_screen_sharing" />
 
+    <CheckBox
+        android:id="@+id/cbP2P"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/cb_p2p" />
+
 
 </LinearLayout>

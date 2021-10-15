@@ -6,4 +6,5 @@
     <string name="cb_screen_sharing">屏幕共享</string>
     <string name="cb_audio_mute">关闭音频</string>
     <string name="cb_video_mute">关闭视频</string>
+    <string name="cb_p2p">启用P2P</string>
 </resources>

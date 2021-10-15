@@ -26,7 +26,6 @@ import owt.p2pandsfu.connection.Connection;
 
 public class P2PHelper {
     public static final String TAG = "P2PHelper";
-    private static final boolean DISABLE = true;
     private P2PClient p2PClient;
     private boolean enabled = true;
     private ConferenceInfo conferenceInfo;
@@ -138,9 +137,6 @@ public class P2PHelper {
     }
 
     public boolean isEnabled() {
-        if (DISABLE) {
-            return false;
-        }
         return enabled;
     }
 

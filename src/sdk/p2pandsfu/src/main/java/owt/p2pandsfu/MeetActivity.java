@@ -11,12 +11,13 @@ import com.alibaba.fastjson.JSON;
 import owt.p2pandsfu.bean.UserInfo;
 
 public class MeetActivity extends AppCompatActivity {
-    public static void start(Context context, String serverUrl, String roomId, UserInfo userInfo, boolean screenSharing) {
+    public static void start(Context context, String serverUrl, String roomId, UserInfo userInfo, boolean screenSharing, boolean p2p) {
         Intent starter = new Intent(context, MeetActivity.class);
         starter.putExtra("serverUrl", serverUrl);
         starter.putExtra("roomId", roomId);
         starter.putExtra("userInfo", JSON.toJSONString(userInfo));
         starter.putExtra("screenSharing", screenSharing);
+        starter.putExtra("p2p", p2p);
         context.startActivity(starter);
     }
 
@@ -29,7 +30,8 @@ public class MeetActivity extends AppCompatActivity {
         String roomId = getIntent().getStringExtra("roomId");
         UserInfo userInfo = JSON.parseObject(getIntent().getStringExtra("userInfo"), UserInfo.class);
         boolean screenSharing = getIntent().getBooleanExtra("screenSharing", false);
-        Fragment fragment = MeetFragment.newInstance(serverUrl, roomId, userInfo, screenSharing);
+        boolean p2p = getIntent().getBooleanExtra("p2p", false);
+        Fragment fragment = MeetFragment.newInstance(serverUrl, roomId, userInfo, screenSharing, p2p);
         getSupportFragmentManager().beginTransaction()
                 .add(R.id.flFragment, fragment)
                 .commit();

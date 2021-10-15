@@ -93,7 +93,8 @@ public class MeetFragment extends Fragment {
     private ConferenceInfo conferenceInfo;
     private LocalStream localStream;
     private OwtBaseCapturer capturer;
-    private P2PHelper p2PHelper = new P2PHelper();
+    @Nullable
+    private P2PHelper p2PHelper;
     private UserInfo selfInfo;
     private HashMap<String, UserInfo> userInfoMap = new HashMap<>();
     private RecyclerView rvSmall;
@@ -130,7 +131,7 @@ public class MeetFragment extends Fragment {
             screenSharing = !screenSharing;
             stopPublish();
             initLocalStream();
-            if (p2PHelper.isEnabled()) {
+            if (p2PHelper != null && p2PHelper.isEnabled()) {
                 p2PHelper.republish();
             } else {
                 sfuPublish();
@@ -240,7 +241,9 @@ public class MeetFragment extends Fragment {
         if (thumbnailAdapter != null) {
             thumbnailAdapter.stopPublish();
         }
-        p2PHelper.stopPublish();
+        if (p2PHelper != null) {
+            p2PHelper.stopPublish();
+        }
         if (capturer != null) {
             capturer.stopCapture();
             capturer.dispose();
@@ -289,7 +292,9 @@ public class MeetFragment extends Fragment {
             }
         }
         thumbnailAdapter.initLocal(localStream, selfInfo);
-        p2PHelper.setLocal(localStream);
+        if (p2PHelper != null) {
+            p2PHelper.setLocal(localStream);
+        }
     }
 
     @Override
@@ -300,7 +305,9 @@ public class MeetFragment extends Fragment {
                     new MediaConstraints.AudioTrackConstraints(),
                     !selfInfo.isAudioMuted(), !selfInfo.isVideoMuted());
             thumbnailAdapter.initLocal(localStream, selfInfo);
-            p2PHelper.setLocal(localStream);
+            if (p2PHelper != null) {
+                p2PHelper.setLocal(localStream);
+            }
             if (publishWait) {
                 sfuPublish();
             }
@@ -338,23 +345,25 @@ public class MeetFragment extends Fragment {
         conferenceClient = new ConferenceClient(configuration);
         conferenceClientObserver = new MyConferenceClientObserver();
         conferenceClient.addObserver(conferenceClientObserver);
-        p2PHelper.initClient(rtcConfiguration, new P2PHelper.P2PAttachListener() {
-            @Override
-            public void onAttach(String participantId, Connection connection, P2PRemoteStream remoteStream) {
-                if (disposed()) {
-                    return;
+        if (p2PHelper != null) {
+            p2PHelper.initClient(rtcConfiguration, new P2PHelper.P2PAttachListener() {
+                @Override
+                public void onAttach(String participantId, Connection connection, P2PRemoteStream remoteStream) {
+                    if (disposed()) {
+                        return;
+                    }
+                    thumbnailAdapter.attachRemoteStream(connection, remoteStream);
                 }
-                thumbnailAdapter.attachRemoteStream(connection, remoteStream);
-            }
 
-            @Override
-            public void onDetach(String participantId, P2PRemoteStream remoteStream) {
-                if (disposed()) {
-                    return;
+                @Override
+                public void onDetach(String participantId, P2PRemoteStream remoteStream) {
+                    if (disposed()) {
+                        return;
+                    }
+                    thumbnailAdapter.detachRemoteStream(remoteStream);
                 }
-                thumbnailAdapter.detachRemoteStream(remoteStream);
-            }
-        });
+            });
+        }
     }
 
     private void initEgl() {
@@ -445,7 +454,7 @@ public class MeetFragment extends Fragment {
             @Override
             public void onSuccess(ConferenceInfo conferenceInfo) {
                 MeetFragment.this.conferenceInfo = conferenceInfo;
-                if (p2PHelper.isEnabled()) {
+                if (p2PHelper != null && p2PHelper.isEnabled()) {
                     p2PHelper.onJoinSuccess(conferenceInfo, new P2PSocket(conferenceClient), () -> {
                         sfuPublish();
                     });
@@ -646,13 +655,14 @@ public class MeetFragment extends Fragment {
         userInfoMap.clear();
     }
 
-    public static MeetFragment newInstance(String serverUrl, String roomId, UserInfo userInfo, boolean screenSharing) {
+    public static MeetFragment newInstance(String serverUrl, String roomId, UserInfo userInfo, boolean screenSharing, boolean p2p) {
         MeetFragment fragment = new MeetFragment();
         Bundle args = new Bundle();
         args.putString("serverUrl", serverUrl);
         args.putString("roomId", roomId);
         args.putString("selfInfo", JSON.toJSONString(userInfo));
         args.putBoolean("screenSharing", screenSharing);
+        args.putBoolean("p2p", p2p);
         fragment.setArguments(args);
         return fragment;
     }
@@ -673,6 +683,10 @@ public class MeetFragment extends Fragment {
             roomId = getArguments().getString("roomId");
             selfInfo = JSON.parseObject(getArguments().getString("selfInfo"), UserInfo.class);
             screenSharing = getArguments().getBoolean("screenSharing", false);
+            boolean p2p = getArguments().getBoolean("p2p", false);
+            if (p2p) {
+                p2PHelper = new P2PHelper();
+            }
         }
     }
 
@@ -721,7 +735,9 @@ public class MeetFragment extends Fragment {
         @Override
         public void onParticipantJoined(Participant participant) {
             Log.d(TAG, "onParticipantJoined() called with: participant = [" + participant.id + "]");
-            p2PHelper.onParticipantJoined(participant.id);
+            if (p2PHelper != null) {
+                p2PHelper.onParticipantJoined(participant.id);
+            }
             sendSelfInfo(participant.id);
             runOnUiThread(() -> {
                 onMemberJoined(participant.id, userInfoMap.get(participant.id));
@@ -753,7 +769,9 @@ public class MeetFragment extends Fragment {
 
         @Override
         public void onServerDisconnected() {
-            p2PHelper.onServerDisconnected();
+            if (p2PHelper != null) {
+                p2PHelper.onServerDisconnected();
+            }
 
             release();
         }
