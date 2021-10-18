@@ -332,10 +332,13 @@ public class MeetFragment extends Fragment {
                 .setPassword("pppass")
                 .setTlsCertPolicy(PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_INSECURE_NO_CHECK)
                 .createIceServer());
-        PeerConnection.RTCConfiguration rtcConfiguration = new PeerConnection.RTCConfiguration(
+        PeerConnection.RTCConfiguration rtcConfigurationP2P = new PeerConnection.RTCConfiguration(
                 iceServers);
-        HttpUtils.setUpINSECURESSLContext();
+        PeerConnection.RTCConfiguration rtcConfiguration = new PeerConnection.RTCConfiguration(
+                new ArrayList<>());
+        rtcConfigurationP2P.continualGatheringPolicy = GATHER_CONTINUALLY;
         rtcConfiguration.continualGatheringPolicy = GATHER_CONTINUALLY;
+        HttpUtils.setUpINSECURESSLContext();
         ConferenceClientConfiguration configuration
                 = ConferenceClientConfiguration.builder()
                 .setHostnameVerifier(HttpUtils.hostnameVerifier)
@@ -346,7 +349,7 @@ public class MeetFragment extends Fragment {
         conferenceClientObserver = new MyConferenceClientObserver();
         conferenceClient.addObserver(conferenceClientObserver);
         if (p2PHelper != null) {
-            p2PHelper.initClient(rtcConfiguration, new P2PHelper.P2PAttachListener() {
+            p2PHelper.initClient(rtcConfigurationP2P, new P2PHelper.P2PAttachListener() {
                 @Override
                 public void onAttach(String participantId, Connection connection, P2PRemoteStream remoteStream) {
                     if (disposed()) {
