@@ -277,20 +277,20 @@ public class MainActivity extends AppCompatActivity
             rightBtn.setTextColor(Color.DKGRAY);
 
             executor.execute(() -> {
-                String serverUrl = loginFragment.getServerUrl();
-                String roomId = settingsFragment == null ? "" : settingsFragment.getRoomId();
-
-                JSONObject joinBody = new JSONObject();
-                try {
-                    joinBody.put("role", "presenter");
-                    joinBody.put("username", "user");
-                    joinBody.put("room", roomId.equals("") ? "" : roomId);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                String uri = serverUrl + "/createToken/";
-                String token = HttpUtils.request(uri, "POST", joinBody.toString(), true);
+//                String serverUrl = loginFragment.getServerUrl();
+//                String roomId = settingsFragment == null ? "" : settingsFragment.getRoomId();
+//
+//                JSONObject joinBody = new JSONObject();
+//                try {
+//                    joinBody.put("role", "presenter");
+//                    joinBody.put("username", "user");
+//                    joinBody.put("room", roomId.equals("") ? "" : roomId);
+//                } catch (JSONException e) {
+//                    e.printStackTrace();
+//                }
+//
+//                String uri = serverUrl + "/createToken/";
+                String token = loginFragment.getServerUrl();
 
                 conferenceClient.join(token, new ActionCallback<ConferenceInfo>() {
                     @Override

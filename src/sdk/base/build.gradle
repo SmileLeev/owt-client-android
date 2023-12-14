@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply from: '../../../maven.gradle'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -21,10 +22,17 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ["../../../dependencies/libwebrtc"]
+        }
+    }
 }
 
 dependencies {
-    implementation(name: 'libwebrtc', ext: 'jar')
+//    api(name: 'libwebrtc', ext: 'jar')
+    api files('../../../dependencies/libwebrtc/libwebrtc.jar')
     androidTestImplementation 'com.android.support:support-annotations:28.0.0'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test:rules:1.0.2'

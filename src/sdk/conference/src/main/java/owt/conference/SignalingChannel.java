@@ -18,10 +18,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URISyntaxException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import javax.net.ssl.X509TrustManager;
 
 import io.socket.client.Ack;
 import io.socket.client.IO;
@@ -188,7 +192,22 @@ final class SignalingChannel {
             opt.secure = isSecure;
             OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder();
             if (configuration.sslContext != null) {
-                clientBuilder.sslSocketFactory(configuration.sslContext.getSocketFactory());
+                clientBuilder.sslSocketFactory(configuration.sslContext.getSocketFactory(), new X509TrustManager() {
+                    @Override
+                    public void checkClientTrusted(X509Certificate[] chain, String authType)
+                            throws CertificateException {
+                    }
+
+                    @Override
+                    public void checkServerTrusted(X509Certificate[] chain, String authType)
+                            throws CertificateException {
+                    }
+
+                    @Override
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+                });
             }
             if (configuration.hostnameVerifier != null) {
                 clientBuilder.hostnameVerifier(configuration.hostnameVerifier);

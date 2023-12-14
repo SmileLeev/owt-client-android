@@ -1,4 +1,5 @@
 apply plugin: 'com.android.library'
+apply from: '../../../maven.gradle'
 
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
@@ -24,12 +25,13 @@ android {
 }
 
 dependencies {
-    implementation(name: 'libwebrtc', ext: 'jar')
+    //implementation(name: 'libwebrtc', ext: 'jar')
     implementation('io.socket:socket.io-client:1.0.1') {
         // excluding org.json which is provided by Android
         exclude group: 'org.json', module: 'json'
     }
-    implementation project(':src:sdk:base')
+    implementation 'com.xiaoice.aic.thirdpart:owt-client-android-base:1.0.1-SNAPSHOT'
+//    implementation project(':src:sdk:base')
 
     androidTestImplementation 'com.android.support:support-annotations:28.0.0'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'

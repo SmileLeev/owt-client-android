@@ -23,9 +23,19 @@ buildscript {
 }
 
 allprojects {
+    Properties localPro = new Properties()
+    localPro.load(rootProject.file('local.properties').newInputStream())
     repositories {
         jcenter()
         google()
+        maven {
+                url localPro.get('nexus.url')
+                allowInsecureProtocol true
+                credentials {
+                    username localPro.get('nexus.uname')
+                    password localPro.get('nexus.upwd')
+                }
+            }
         flatDir {
             dirs rootProject.file('dependencies/libwebrtc')
         }
