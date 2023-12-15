@@ -1,0 +1,43 @@
+apply plugin: 'maven-publish'
+
+def uname = ""
+def upwd = ""
+def ue_upload_url = ""
+def localFile = rootProject.file('local.properties')
+if (localFile.exists() && localFile.length() > 0) {
+    Properties localProperties = new Properties()
+    localProperties.load(new FileInputStream(localFile))
+    uname = localProperties.getOrDefault("nexus.uname", "")
+    upwd = localProperties.getOrDefault("nexus.upwd", "")
+    ue_upload_url = localProperties.getOrDefault("nexus.url", "")
+}
+
+//将源码打包，这一点对kotlin来说很重要，否则业务侧无法看到源码
+task androidSourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    from android.sourceSets.main.java.srcDirs
+}
+
+afterEvaluate {
+    publishing {
+        repositories { RepositoryHandler repoHandler ->
+            repoHandler.maven {
+                url ue_upload_url
+                credentials {
+                    username uname
+                    password upwd
+                }
+//                allowInsecureProtocol true
+            }
+        }
+        publications {
+            maven(MavenPublication) {
+                version = UPLOAD_VERSION
+                artifactId = UPLOAD_ARTIFACT
+                groupId = UPLOAD_GROUP
+                artifact(androidSourcesJar)
+                artifact(bundleReleaseAar)
+            }
+        }
+    }
+}
